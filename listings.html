@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Listings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              body: ['"PT Sans"', 'sans-serif'],
+              headline: ['"PT Sans"', 'sans-serif'],
+              code: ['monospace'],
+            },
+            colors: {
+              background: 'hsl(43 67% 96%)',
+              foreground: 'hsl(20 14.3% 4.1%)',
+              card: 'hsl(43 67% 96%)',
+              'card-foreground': 'hsl(20 14.3% 4.1%)',
+              popover: 'hsl(43 67% 96%)',
+              'popover-foreground': 'hsl(20 14.3% 4.1%)',
+              primary: 'hsl(34 91% 75%)',
+              'primary-foreground': 'hsl(20 14.3% 4.1%)',
+              secondary: 'hsl(45 60% 88%)',
+              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
+              muted: 'hsl(45 60% 88%)',
+              'muted-foreground': 'hsl(20 14.3% 40.1%)',
+              accent: 'hsl(45 67% 91%)',
+              'accent-foreground': 'hsl(20 14.3% 4.1%)',
+              destructive: 'hsl(0 84.2% 60.2%)',
+              'destructive-foreground': 'hsl(0 0% 98%)',
+              border: 'hsl(45 40% 80%)',
+              input: 'hsl(45 40% 80%)',
+              ring: 'hsl(34 91% 75%)',
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body>
+    <main class="container mx-auto px-4 py-12">
+      <h1 class="text-4xl font-bold font-headline mb-8 text-center">Meet Your Future Friend</h1>
+      
+      <div class="mb-8 max-w-xl mx-auto">
+        <form id="search-form" class="flex items-center space-x-2">
+          <input 
+            type="search" 
+            id="search-input"
+            placeholder="Search by breed or name..." 
+            class="flex-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          />
+          <button type="submit" aria-label="Search" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 w-9">
+            <!-- Search Icon SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+        </form>
+      </div>
+
+      <div id="listing-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <!-- Pet listings will be dynamically inserted here -->
+      </div>
+
+      <div id="pagination-controls" class="mt-12 flex justify-center items-center gap-4">
+          <!-- Pagination will be dynamically inserted here -->
+      </div>
+    </main>
+
+    <script src="./js/auth.js"></script>
+    <script src="./js/layout.js"></script>
+    <script src="./js/data.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+</html>

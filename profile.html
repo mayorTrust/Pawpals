@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - My Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              body: ['"PT Sans"', 'sans-serif'],
+              headline: ['"PT Sans"', 'sans-serif'],
+              code: ['monospace'],
+            },
+            colors: {
+              background: 'hsl(43 67% 96%)',
+              foreground: 'hsl(20 14.3% 4.1%)',
+              card: 'hsl(43 67% 96%)',
+              'card-foreground': 'hsl(20 14.3% 4.1%)',
+              popover: 'hsl(43 67% 96%)',
+              'popover-foreground': 'hsl(20 14.3% 4.1%)',
+              primary: 'hsl(34 91% 75%)',
+              'primary-foreground': 'hsl(20 14.3% 4.1%)',
+              secondary: 'hsl(45 60% 88%)',
+              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
+              muted: 'hsl(45 60% 88%)',
+              'muted-foreground': 'hsl(20 14.3% 40.1%)',
+              accent: 'hsl(45 67% 91%)',
+              'accent-foreground': 'hsl(20 14.3% 4.1%)',
+              destructive: 'hsl(0 84.2% 60.2%)',
+              'destructive-foreground': 'hsl(0 0% 98%)',
+              border: 'hsl(45 40% 80%)',
+              input: 'hsl(45 40% 80%)',
+              ring: 'hsl(34 91% 75%)',
+            }
+          }
+        }
+      }
+    </script>
+</head>
+    <main class="container mx-auto max-w-4xl px-4 py-12">
+        <div id="profile-content">
+            <!-- Profile information will be dynamically inserted here -->
+        </div>
+    </main>
+
+    <script src="./js/data.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/layout.js"></script>
+    <script>
+        // Basic protected route check
+        if (!isLoggedIn()) {
+            window.location.href = '/login.html';
+        } else {
+            const user = getLoggedInUser();
+            const profileContent = document.getElementById('profile-content');
+
+            const getInitials = (name) => {
+                if (!name) return 'U';
+                return name.split(' ').map((n) => n[0]).join('');
+            };
+
+            if (user && profileContent) {
+                profileContent.innerHTML = `
+                <div class="space-y-10">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                        <div class="h-24 w-24 border-2 border-primary rounded-full flex items-center justify-center bg-gray-200 text-3xl font-bold">
+                            ${getInitials(user.name)}
+                        </div>
+                        <div>
+                          <h1 class="text-4xl font-bold font-headline">${user.name}</h1>
+                          <p class="text-lg text-muted-foreground">${user.email}</p>
+                          <span class="mt-2 inline-block rounded-full bg-secondary px-3 py-1 text-sm font-medium capitalize text-secondary-foreground">
+                            ${user.role}
+                          </span>
+                        </div>
+                    </div>
+      
+                    <div class="grid gap-8 md:grid-cols-2">
+                        <div class="border rounded-lg">
+                            <div class="p-6 flex flex-row items-center gap-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-primary"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <div>
+                                    <h3 class="text-lg font-semibold">Personal Information</h3>
+                                    <p class="text-sm text-muted-foreground">Manage your personal details.</p>
+                                </div>
+                            </div>
+                            <div class="p-6 pt-0">
+                                <button disabled class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-gray-200 text-gray-500 h-9 px-4 py-2">Edit Profile</button>
+                                <p class="text-xs text-muted-foreground mt-2">Editing coming soon.</p>
+                            </div>
+                        </div>
+                        <div class="border rounded-lg">
+                            <div class="p-6 flex flex-row items-center gap-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-primary"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                                <div>
+                                    <h3 class="text-lg font-semibold">Payment Details</h3>
+                                    <p class="text-sm text-muted-foreground">Add or update your payment methods.</p>
+                                </div>
+                            </div>
+                            <div class="p-6 pt-0">
+                                <button disabled class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-gray-200 text-gray-500 h-9 px-4 py-2">Add Payment Method</button>
+                                <p class="text-xs text-muted-foreground mt-2">Not yet implemented.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-3xl font-bold font-headline mb-6 flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            Order History
+                        </h2>
+                        <div class="border rounded-lg">
+                            <div class="p-6">
+                                ${mockOrders.length > 0 ? `
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${mockOrders.map(order => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.orderId}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.date}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                        ${order.status}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">$${order.total.toLocaleString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                                ` : `
+                                <div class="text-center text-muted-foreground py-8">
+                                    <p>You have no active orders.</p>
+                                    <p>Ready to find a new friend?</p>
+                                    <a href="listings.html" class="text-primary hover:underline mt-2 inline-block">Browse Listings</a>
+                                </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

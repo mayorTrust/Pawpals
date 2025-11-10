@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              body: ['"PT Sans"', 'sans-serif'],
+              headline: ['"PT Sans"', 'sans-serif'],
+              code: ['monospace'],
+            },
+            colors: {
+              background: 'hsl(43 67% 96%)',
+              foreground: 'hsl(20 14.3% 4.1%)',
+              card: 'hsl(43 67% 96%)',
+              'card-foreground': 'hsl(20 14.3% 4.1%)',
+              popover: 'hsl(43 67% 96%)',
+              'popover-foreground': 'hsl(20 14.3% 4.1%)',
+              primary: 'hsl(34 91% 75%)',
+              'primary-foreground': 'hsl(20 14.3% 4.1%)',
+              secondary: 'hsl(45 60% 88%)',
+              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
+              muted: 'hsl(45 60% 88%)',
+              'muted-foreground': 'hsl(20 14.3% 40.1%)',
+              accent: 'hsl(45 67% 91%)',
+              'accent-foreground': 'hsl(20 14.3% 4.1%)',
+              destructive: 'hsl(0 84.2% 60.2%)',
+              'destructive-foreground': 'hsl(0 0% 98%)',
+              border: 'hsl(45 40% 80%)',
+              input: 'hsl(45 40% 80%)',
+              ring: 'hsl(34 91% 75%)',
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body>
+    <main>
+      <section class="relative w-full py-20 md:py-32 lg:py-40 overflow-hidden">
+        <div class="container mx-auto px-4 text-center">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-10">
+            <!-- 3D Logo Placeholder -->
+            <div class="w-full h-full bg-gray-200 rounded-full animate-pulse"></div>
+          </div>
+          <div class="relative z-10">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold font-headline tracking-tighter">
+              Find Your New Best Friend
+            </h1>
+            <p class="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+              The leading marketplace for adopting and bidding on your next furry companion, in real-time.
+            </p>
+            <div class="mt-8 flex flex-col items-center gap-4">
+              <form id="search-form-home" class="w-full max-w-xl flex items-center space-x-2">
+                <input 
+                  type="search" 
+                  id="search-input"
+                  placeholder="Search by breed or name (e.g., Corgi)" 
+                  class="flex-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                />
+                <button type="submit" aria-label="Search" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 w-9">
+                  <!-- Search Icon SVG -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+              </form>
+              <a href="/listings.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+                  Browse All Pups <Bone className="ml-2 h-4 w-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="py-12 md:py-20 bg-accent/50">
+        <div class="container mx-auto px-4">
+          <h2 class="text-3xl font-bold text-center font-headline mb-8">Pups Waiting For You</h2>
+          <div id="featured-listings" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Featured listings will be dynamically inserted here -->
+          </div>
+          <div class="text-center mt-12">
+            <a href="listings.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+              View All Listings
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./js/auth.js"></script>
+    <script src="./js/layout.js"></script>
+    <script src="./js/data.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+</html>

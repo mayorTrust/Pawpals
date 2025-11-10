@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              body: ['"PT Sans"', 'sans-serif'],
+              headline: ['"PT Sans"', 'sans-serif'],
+              code: ['monospace'],
+            },
+            colors: {
+              background: 'hsl(43 67% 96%)',
+              foreground: 'hsl(20 14.3% 4.1%)',
+              card: 'hsl(43 67% 96%)',
+              'card-foreground': 'hsl(20 14.3% 4.1%)',
+              popover: 'hsl(43 67% 96%)',
+              'popover-foreground': 'hsl(20 14.3% 4.1%)',
+              primary: 'hsl(34 91% 75%)',
+              'primary-foreground': 'hsl(20 14.3% 4.1%)',
+              secondary: 'hsl(45 60% 88%)',
+              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
+              muted: 'hsl(45 60% 88%)',
+              'muted-foreground': 'hsl(20 14.3% 40.1%)',
+              accent: 'hsl(45 67% 91%)',
+              'accent-foreground': 'hsl(20 14.3% 4.1%)',
+              destructive: 'hsl(0 84.2% 60.2%)',
+              'destructive-foreground': 'hsl(0 0% 98%)',
+              border: 'hsl(45 40% 80%)',
+              input: 'hsl(45 40% 80%)',
+              ring: 'hsl(34 91% 75%)',
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body>
+    <main class="container flex min-h-screen items-center justify-center py-12">
+      <div class="mx-auto max-w-sm border rounded-lg bg-card text-card-foreground shadow-sm">
+        <div class="flex flex-col p-6 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto h-10 w-10 mb-2 text-primary">
+            <path d="M14.5 7.5a2.5 2.5 0 0 1 5 0V8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V7.5Z"></path>
+            <path d="M9.5 7.5a2.5 2.5 0 0 0-5 0V8a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V7.5Z"></path>
+            <path d="M12 15a2.5 2.5 0 0 0-2.5-2.5h-1a2.5 2.5 0 0 0 0 5h1A2.5 2.5 0 0 0 12 15Z"></path>
+            <path d="M22 12c0 5.5-4.5 10-10 10S2 17.5 2 12 6.5 2 12 2a9.7 9.7 0 0 1 5.4.3"></path>
+          </svg>
+          <h2 class="text-2xl font-semibold leading-none tracking-tight">Welcome Back!</h2>
+          <p class="text-sm text-muted-foreground">
+            Enter your email below to login to your account
+          </p>
+        </div>
+        <div class="p-6 pt-0">
+          <form id="login-form" class="grid gap-4">
+            <div class="grid gap-2">
+              <label for="email" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
+              <input type="email" id="email" name="email" placeholder="m@example.com" required class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+            </div>
+            <div class="grid gap-2">
+              <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
+              <input type="password" id="password" name="password" placeholder="••••••••" required class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+            </div>
+            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full">
+              Login
+            </button>
+            <div class="mt-4 text-center text-sm">
+              Don't have an account?
+              <a href="/signup.html" class="underline">
+                Sign up
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script src="./js/data.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/layout.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const email = event.target.email.value;
+            const password = event.target.password.value;
+            const user = login(email, password);
+            if (user) {
+                // Redirect based on role
+                if (user.role === 'admin') {
+                    window.location.href = '/admin/dashboard.html';
+                } else {
+                    window.location.href = '/profile.html';
+                }
+            } else {
+                alert('Invalid email or password.');
+            }
+        });
+    </script>
+</body>
+</html>
