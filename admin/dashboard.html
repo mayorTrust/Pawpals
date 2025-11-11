@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="/js/firebase.js"></script>
+    <script type="module" src="../js/loading.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -39,6 +41,34 @@
         }
       }
     </script>
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
 </head>
     <main class="container mx-auto px-4 py-12">
       <div class="mb-8">
@@ -108,20 +138,55 @@
       </div>
     </main>
 
-    <script src="../js/auth.js"></script>
-    <script src="../js/layout.js"></script>
-    <script>
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/layout.js"></script>
+    <script type="module">
+        import { isAdmin } from '../js/auth.js';
+        import { db } from '../js/firebase.js';
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js";
+
         // Basic protected route check
         if (!isAdmin()) {
             window.location.href = '/login.html';
         }
 
-        // Simulate form submission
-        document.getElementById('new-listing-form').addEventListener('submit', (e) => {
+        document.getElementById('new-listing-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert('Listing created successfully! (Simulated)');
-            // In a real app, you would redirect to the new listing's page
-            window.location.href = '/listings.html';
+
+            const name = e.target[0].value;
+            const breed = e.target[1].value;
+            const age = parseInt(e.target[2].value);
+            const price = parseFloat(e.target[3].value);
+            const description = e.target[4].value;
+            const vaccinated = e.target[5].checked;
+            const dewormed = e.target[6].checked;
+            const healthNotes = e.target[7].value;
+            // For images, you would typically upload them to Firebase Storage first
+            // and then save the URLs to Firestore. For now, we'll use a placeholder.
+            const imageUrls = ["https://via.placeholder.com/400x300"]; 
+
+            try {
+                await addDoc(collection(db, "listings"), {
+                    name,
+                    breed,
+                    age,
+                    price,
+                    description,
+                    healthInfo: {
+                        vaccinated,
+                        dewormed,
+                        notes: healthNotes
+                    },
+                    imageUrls,
+                    status: 'available',
+                    createdAt: new Date().toISOString()
+                });
+                alert('Listing created successfully!');
+                window.location.href = '/listings.html';
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert('Error creating listing: ' + error.message);
+            }
         });
     </script>
 </body>

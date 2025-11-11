@@ -1,3 +1,5 @@
+import { getLoggedInUser, isAdmin, logout } from './auth.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     injectHeader();
     injectFooter();
@@ -58,7 +60,7 @@ function injectFooter() {
     document.body.appendChild(footerPlaceholder);
 }
 
-function updateAuthNav() {
+export function updateAuthNav() { // Export updateAuthNav
     const authNav = document.getElementById('auth-nav');
     if (!authNav) return;
 
@@ -85,7 +87,7 @@ function updateAuthNav() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                         <span>Profile</span>
                     </a>
-                    ${user.role === 'admin' ? `
+                    ${isAdmin() ? `
                     <a href="/admin/dashboard.html" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                         <span>Admin Dashboard</span>

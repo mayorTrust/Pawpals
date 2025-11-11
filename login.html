@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="/js/firebase.js"></script>
+    <script type="module" src="./js/loading.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -39,6 +41,34 @@
         }
       }
     </script>
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
 </head>
 <body>
     <main class="container flex min-h-screen items-center justify-center py-12">
@@ -65,7 +95,7 @@
               <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
               <input type="password" id="password" name="password" placeholder="••••••••" required class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
             </div>
-            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full">
+            <button type="submit" id="login-button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full">
               Login
             </button>
             <div class="mt-4 text-center text-sm">
@@ -79,25 +109,24 @@
       </div>
     </main>
 
-    <script src="./js/data.js"></script>
-    <script src="./js/auth.js"></script>
-    <script src="./js/layout.js"></script>
-    <script>
-        document.getElementById('login-form').addEventListener('submit', (event) => {
+    <script type="module" src="./js/data.js"></script>
+    <script type="module" src="./js/auth.js"></script>
+    <script type="module" src="./js/layout.js"></script>
+    <script type="module">
+        document.getElementById('login-form').addEventListener('submit', async (event) => {
             event.preventDefault();
             const email = event.target.email.value;
             const password = event.target.password.value;
-            const user = login(email, password);
-            if (user) {
-                // Redirect based on role
-                if (user.role === 'admin') {
-                    window.location.href = '/admin/dashboard.html';
-                } else {
-                    window.location.href = '/profile.html';
-                }
-            } else {
-                alert('Invalid email or password.');
-            }
+            const loginButton = document.getElementById('login-button');
+
+            loginButton.disabled = true;
+            loginButton.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            
+            const { login } = await import('./js/auth.js');
+            await login(email, password);
+            
+            loginButton.disabled = false;
+            loginButton.innerHTML = 'Login';
         });
     </script>
 </body>

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Admin Listings</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="/js/firebase.js"></script>
+    <script type="module" src="../js/loading.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -39,6 +41,34 @@
         }
       }
     </script>
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
 </head>
     <main class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold mb-4">Manage Listings</h1>
@@ -62,45 +92,56 @@
         </div>
     </main>
 
-    <script src="../js/auth.js"></script>
-    <script src="../js/layout.js"></script>
-    <script src="../js/data.js"></script>
-    <script>
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/layout.js"></script>
+    <script type="module">
+        import { isAdmin } from '../js/auth.js';
+        import { db } from '../js/firebase.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js";
+
         // Basic protected route check
         if (!isAdmin()) {
             window.location.href = '/login.html';
         } else {
             const tableBody = document.getElementById('listings-table-body');
             if (tableBody) {
-                mockListings.forEach(listing => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <img class="h-10 w-10 rounded-full" src="${listing.imageUrls[0]}" alt="">
+                // Fetch listings from Firestore
+                getDocs(collection(db, "listings")).then((querySnapshot) => {
+                    tableBody.innerHTML = ''; // Clear existing mock data
+                    querySnapshot.forEach((doc) => {
+                        const listing = doc.data();
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <img class="h-10 w-10 rounded-full" src="${listing.imageUrls[0]}" alt="">
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">${listing.name}</div>
+                                    </div>
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">${listing.name}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">${listing.breed}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                $${listing.price}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${listing.status}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${listing.breed}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    ${listing.price}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${listing.status}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }).catch((error) => {
+                    console.error("Error getting documents: ", error);
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Error loading listings.</td></tr>';
                 });
             }
         }

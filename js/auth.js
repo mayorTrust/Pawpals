@@ -1,54 +1,103 @@
-// --- Authentication Simulation ---
+import { auth, db } from './firebase.js';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { updateAuthNav } from './layout.js'; // Import updateAuthNav
 
-// In a real app, you'd have a more robust user object and session management.
-// For this simulation, we'll use localStorage.
+let currentUser = null; // To store the current logged-in user's data
 
-function login(email, password) {
-    // Find a user from our mock data
-    const user = mockUsers.find(u => u.email === email && u.password === password);
-
+// Listen for auth state changes
+onAuthStateChanged(auth, async (user) => { // Use onAuthStateChanged from v9
+    console.log("Auth state changed. User:", user);
     if (user) {
-        console.log('Login successful for:', user.email);
-        localStorage.setItem('loggedInUser', JSON.stringify(user));
-        // Redirect based on role
-        if (user.role === 'admin') {
-            window.location.href = '/admin/dashboard.html';
+        // User is signed in, fetch their data from Firestore
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            currentUser = { uid: user.uid, ...userSnap.data() };
+            console.log("Fetched currentUser from Firestore:", currentUser);
         } else {
-            window.location.href = '/profile.html';
+            console.error("User data not found in Firestore for UID:", user.uid);
+            currentUser = { uid: user.uid, email: user.email, role: 'user' }; // Fallback
+            console.log("Using fallback currentUser:", currentUser);
         }
-        return user;
+
+        // Redirect logged-in users from login/signup pages
+        const path = window.location.pathname;
+        if (path.endsWith('/login.html') || path.endsWith('/signup.html')) {
+            if (currentUser.role === 'admin') {
+                window.location.href = '/admin/dashboard.html';
+            } else {
+                window.location.href = '/profile.html';
+            }
+        }
     } else {
-        console.log('Login failed for:', email);
-        localStorage.removeItem('loggedInUser');
+        // User is signed out
+        currentUser = null;
+        console.log("User is signed out. currentUser is null.");
+    }
+    // Update UI elements that depend on auth state (e.g., header nav)
+    updateAuthNav(); // Call updateAuthNav directly
+    console.log("updateAuthNav() called.");
+});
+
+async function login(email, password) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        console.log('Login successful for:', user.email);
+        // Redirection is now handled by onAuthStateChanged listener
+        return currentUser;
+    } catch (error) {
+        console.error('Login failed:', error.message);
+        alert('Login failed: ' + error.message);
         return null;
     }
 }
 
-function logout() {
-    console.log('User logged out.');
-    localStorage.removeItem('loggedInUser');
+async function signup(name, email, password) {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Store user data in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+            name: name,
+            email: email,
+            role: 'user' // Default role for new users
+        });
+
+        console.log('Signup successful for:', user.email);
+        // Redirection is now handled by onAuthStateChanged listener
+        return currentUser;
+    } catch (error) {
+        console.error('Signup failed:', error.message);
+        alert('Signup failed: ' + error.message);
+        return null;
+    }
+}
+
+async function logout() {
+    try {
+        await signOut(auth);
+        console.log('User logged out.');
+        // currentUser will be set to null by onAuthStateChanged listener
+        window.location.href = '/login.html'; // Redirect after logout
+    } catch (error) {
+        console.error('Logout failed:', error.message);
+        alert('Logout failed: ' + error.message);
+    }
 }
 
 function getLoggedInUser() {
-    try {
-        return JSON.parse(localStorage.getItem('loggedInUser'));
-    } catch (e) {
-        return null;
-    }
+    return currentUser;
 }
 
 function isLoggedIn() {
-    return getLoggedInUser() !== null;
+    return currentUser !== null;
 }
 
 function isAdmin() {
-    const user = getLoggedInUser();
-    return user && user.role === 'admin';
+    return currentUser && currentUser.role === 'admin';
 }
 
-// --- Mock Users ---
-// In a real app, this would come from a database.
-const mockUsers = [
-    { id: 'user-1', name: 'Admin User', email: 'admin@pawpals.com', password: 'password123', role: 'admin' },
-    { id: 'user-3', name: 'Regular User', email: 'user@pawpals.com', password: 'password123', role: 'user' },
-];
+export { login, signup, logout, getLoggedInUser, isLoggedIn, isAdmin };
