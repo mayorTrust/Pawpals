@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PawPals - Admin Dashboard</title>
+    <title>PawPals - Edit Listing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module" src="/js/firebase.js"></script>
     <script type="module" src="../js/loading.js"></script>
@@ -73,30 +73,15 @@
     <main class="container mx-auto px-4 py-12">
       <div class="mb-8">
         <h1 class="text-4xl font-bold font-headline flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            Admin Dashboard
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            Edit Listing
         </h1>
-        <p class="text-muted-foreground">Welcome! Create and manage listings from here.</p>
+        <p class="text-muted-foreground">Update the details for this listing.</p>
       </div>
 
-       <div class="mb-8 flex gap-4">
-          <a href="dashboard.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-            Create Listing
-          </a>
-          <a href="listings.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18"x2="3.01" y2="18"></line></svg>
-            Manage Listings
-          </a>
-        </div>
-        
       <div class="border rounded-lg">
-        <div class="p-6">
-            <h3 class="text-lg font-semibold">Create New Listing</h3>
-            <p class="text-sm text-muted-foreground">Fill out the details below to add a new puppy to the marketplace.</p>
-        </div>
         <div class="p-6 pt-0">
-          <form id="new-listing-form" class="space-y-8">
+          <form id="edit-listing-form" class="space-y-8">
             <div class="grid md:grid-cols-2 gap-8">
                 <div><label class="text-sm font-medium">Puppy's Name</label><input name="name" placeholder="e.g. Buddy" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"></div>
                 <div><label class="text-sm font-medium">Breed</label><input name="breed" placeholder="e.g. Golden Retriever" class="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"></div>
@@ -111,7 +96,7 @@
               <div class="space-y-2 mt-2">
                 <div class="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><input name="vaccinated" type="checkbox" class="accent-primary"><div class="space-y-1 leading-none"><label>Vaccinated</label></div></div>
                 <div class="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><input name="dewormed" type="checkbox" class="accent-primary"><div class="space-y-1 leading-none"><label>Dewormed</label></div></div>
-                <div><label class="text-sm font-medium mt-4">Additional Health Notes</label><textarea name="healthNotes" placeholder="Any other health details..." class="mt-1 flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-1 ring disabled:cursor-not-allowed disabled:opacity-50"></textarea></div>
+                <div><label class="text-sm font-medium mt-4">Additional Health Notes</label><textarea name="healthNotes" placeholder="Any other health details..." class="mt-1 flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"></textarea></div>
               </div>
             </div>
 
@@ -132,7 +117,7 @@
             </div>
 
             <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2 w-full md:w-auto">
-              Create Listing
+              Save Changes
             </button>
           </form>
         </div>
@@ -141,17 +126,23 @@
 
     <script type="module" src="../js/auth.js"></script>
     <script type="module" src="../js/layout.js"></script>
+    <script type="module" src="../js/data.js"></script>
     <script type="module">
-        import { isAdmin, authReady } from '../js/auth.js';
+        import { authReady, isAdmin } from '../js/auth.js';
         import { db } from '../js/firebase.js';
-        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js'; // Import loading functions
+        import { getListingById, updateListing, addListing } from '../js/data.js';
+        import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js';
 
+        const form = document.getElementById('edit-listing-form');
+        const imagePreview = document.getElementById('image-preview');
+        const pageTitle = document.querySelector('h1');
+        const pageDescription = document.querySelector('.text-muted-foreground');
+        let listingId = null; // Initialize as null
         let selectedFiles = []; // To store files selected for upload
+        let existingImageUrls = []; // To store existing image URLs for editing
 
         // Handle file selection for preview
         document.getElementById('dropzone-file').addEventListener('change', (event) => {
-            const imagePreview = document.getElementById('image-preview');
             imagePreview.innerHTML = ''; // Clear previous previews
             selectedFiles = Array.from(event.target.files); // Store selected files
 
@@ -167,79 +158,131 @@
             });
         });
 
-        authReady.then(() => {
-            // Basic protected route check
+
+        authReady.then(async user => {
             if (!isAdmin()) {
                 window.location.href = '/login.html';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            listingId = urlParams.get('id'); // Will be null if no ID is in URL
+
+            if (listingId) {
+                // Editing an existing listing
+                pageTitle.textContent = 'Edit Listing';
+                pageDescription.textContent = 'Update the details for this listing.';
+                showLoadingOverlay();
+                const listing = await getListingById(listingId);
+                hideLoadingOverlay();
+
+                if (listing) {
+                    form.name.value = listing.name;
+                    form.breed.value = listing.breed;
+                    form.age.value = listing.age;
+                    form.price.value = listing.price;
+                    form.description.value = listing.description;
+                    form.vaccinated.checked = listing.healthInfo.vaccinated;
+                    form.dewormed.checked = listing.healthInfo.dewormed;
+                    form.healthNotes.value = listing.healthInfo.notes;
+                    existingImageUrls = listing.imageUrls || []; // Store existing image URLs
+
+                    // Display existing images
+                    if (existingImageUrls.length > 0) {
+                        existingImageUrls.forEach(url => {
+                            const preview = document.createElement('div');
+                            preview.className = 'relative';
+                            preview.innerHTML = `<img src="${url}" class="w-full h-auto rounded-lg">`;
+                            imagePreview.appendChild(preview);
+                        });
+                    }
+                } else {
+                    alert('Listing not found!');
+                    window.location.href = 'listings.html';
+                }
             } else {
-                document.getElementById('new-listing-form').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    showLoadingOverlay();
+                // Creating a new listing
+                pageTitle.textContent = 'Add New Listing';
+                pageDescription.textContent = 'Enter the details for a new listing.';
+                // Clear form fields for new entry (already empty by default)
+            }
+        });
 
-                    let uploadedImageUrls = [];
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoadingOverlay();
 
-                    // Upload images if new files are selected
-                    if (selectedFiles.length > 0) {
-                        const formData = new FormData();
-                        selectedFiles.forEach(file => {
-                            formData.append('images[]', file);
-                        });
+            let uploadedImageUrls = [];
 
-                        try {
-                            const response = await fetch('/upload.php', {
-                                method: 'POST',
-                                body: formData
-                            });
-
-                            if (!response.ok) {
-                                const errorData = await response.json();
-                                throw new Error(errorData.errors ? errorData.errors.join(', ') : 'Image upload failed');
-                            }
-
-                            const result = await response.json();
-                            uploadedImageUrls = result.urls;
-                        } catch (error) {
-                            hideLoadingOverlay();
-                            console.error("Error uploading images: ", error);
-                            alert('Error uploading images: ' + error.message);
-                            return; // Stop submission if image upload fails
-                        }
-                    }
-
-                    const name = e.target[0].value;
-                    const breed = e.target[1].value;
-                    const age = parseInt(e.target[2].value);
-                    const price = parseFloat(e.target[3].value);
-                    const description = e.target[4].value;
-                    const vaccinated = e.target[5].checked;
-                    const dewormed = e.target[6].checked;
-                    const healthNotes = e.target[7].value;
-                    
-                    try {
-                        await addDoc(collection(db, "listings"), {
-                            name,
-                            breed,
-                            age,
-                            price,
-                            description,
-                            healthInfo: {
-                                vaccinated,
-                                dewormed,
-                                notes: healthNotes
-                            },
-                            imageUrls: uploadedImageUrls, // Use uploaded image URLs
-                            status: 'available',
-                            createdAt: new Date().toISOString()
-                        });
-                        alert('Listing created successfully!');
-                        hideLoadingOverlay();
-                        window.location.href = 'listings.html';
-                    } catch (error) {
-                        hideLoadingOverlay();
-                        console.error("Error adding document: ", error);
-                        alert('Error creating listing: ' + error.message);
-                    }
+            // Upload images if new files are selected
+            if (selectedFiles.length > 0) {
+                const formData = new FormData();
+                selectedFiles.forEach(file => {
+                    formData.append('images[]', file);
                 });
+
+                try {
+                    const response = await fetch('/upload.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.errors ? errorData.errors.join(', ') : 'Image upload failed');
+                    }
+
+                    const result = await response.json();
+                    uploadedImageUrls = result.urls;
+                } catch (error) {
+                    hideLoadingOverlay();
+                    console.error("Error uploading images: ", error);
+                    alert('Error uploading images: ' + error.message);
+                    return; // Stop submission if image upload fails
+                }
+            } else if (listingId) {
+                // If editing and no new files selected, retain existing images
+                uploadedImageUrls = existingImageUrls;
+            }
+
+
+            const listingData = { // Use listingData for both add and update
+                name: form.name.value,
+                breed: form.breed.value,
+                age: parseInt(form.age.value),
+                price: parseFloat(form.price.value),
+                description: form.description.value,
+                healthInfo: {
+                    vaccinated: form.vaccinated.checked,
+                    dewormed: form.dewormed.checked,
+                    notes: form.healthNotes.value
+                },
+                imageUrls: uploadedImageUrls, // Use uploaded or existing image URLs
+                status: 'available', // Default status for new listings
+                updatedAt: new Date().toISOString()
+            };
+
+            // Conditionally add createdAt only for new listings
+            if (!listingId) {
+                listingData.createdAt = new Date().toISOString();
+            }
+
+            try {
+                if (listingId) {
+                    // Update existing listing
+                    await updateListing(listingId, listingData);
+                    alert('Listing updated successfully!');
+                } else {
+                    // Add new listing
+                    await addListing(listingData);
+                    alert('Listing added successfully!');
+                }
+                hideLoadingOverlay();
+                window.location.href = 'listings.html';
+            } catch (error) {
+                hideLoadingOverlay();
+                console.error("Error saving listing: ", error);
+                alert('Error saving listing: ' + error.message);
             }
         });
     </script>

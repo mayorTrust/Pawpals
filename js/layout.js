@@ -1,8 +1,13 @@
-import { getLoggedInUser, isAdmin, logout } from './auth.js';
+import { getLoggedInUser, isAdmin, logout, authReady } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     injectHeader();
     injectFooter();
+    
+    // Ensure updateAuthNav runs only after auth state is confirmed
+    authReady.then(() => {
+        updateAuthNav();
+    });
 });
 
 function injectHeader() {
@@ -29,13 +34,41 @@ function injectHeader() {
         <div class="flex flex-1 items-center justify-end space-x-4">
           <nav id="auth-nav" class="flex items-center space-x-2">
             <!-- Auth-related buttons will be injected here -->
+            <a id="login-button-nav" href="/login.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 hidden">Log in</a>
+            <a id="signup-button-nav" href="/signup.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 hidden">Sign Up</a>
+
+            <div id="user-dropdown-nav" class="relative hidden">
+                <button id="user-menu-button" class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold transition-colors hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                    <!-- User initial will be injected here -->
+                </button>
+                <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 origin-top-right rounded-md border bg-popover p-1 text-popover-foreground shadow-md focus:outline-none z-50" role="menu">
+                    <div class="flex flex-col space-y-1 p-2">
+                      <p id="user-name-display" class="text-sm font-medium leading-none"></p>
+                      <p id="user-email-display" class="text-xs leading-none text-muted-foreground"></p>
+                    </div>
+                    <div class="my-1 h-px bg-muted"></div> <!-- DropdownMenuSeparator -->
+                    <a href="/index.html" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        <span>Home</span>
+                    </a>
+                    <a href="/profile.html" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>Profile</span>
+                    </a>
+                    <div id="admin-dashboard-link-container"></div>
+                    <div class="my-1 h-px bg-muted"></div> <!-- DropdownMenuSeparator -->
+                    <a href="#" id="logout-button" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Log out</span>
+                    </a>
+                </div>
+            </div>
           </nav>
         </div>
       </div>
     </header>
     `;
     document.body.prepend(headerPlaceholder);
-    updateAuthNav();
 }
 
 function injectFooter() {
@@ -61,74 +94,66 @@ function injectFooter() {
 }
 
 export function updateAuthNav() { // Export updateAuthNav
-    const authNav = document.getElementById('auth-nav');
-    if (!authNav) return;
+    const loginButton = document.getElementById('login-button-nav');
+    const signupButton = document.getElementById('signup-button-nav');
+    const userDropdown = document.getElementById('user-dropdown-nav');
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenu = document.getElementById('user-menu');
+    const userNameDisplay = document.getElementById('user-name-display');
+    const userEmailDisplay = document.getElementById('user-email-display');
+    const adminDashboardLinkContainer = document.getElementById('admin-dashboard-link-container');
+    const logoutButton = document.getElementById('logout-button'); // Get logout button reference
 
     const user = getLoggedInUser();
 
-    if (user) {
-        // User is logged in, show profile/logout
-        let dropdownHTML = `
-            <div class="relative">
-                <button id="user-menu-button" class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold transition-colors hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                    ${user.name ? user.name.charAt(0) : 'U'}
-                </button>
-                <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 origin-top-right rounded-md border bg-popover p-1 text-popover-foreground shadow-md focus:outline-none z-50" role="menu">
-                    <div class="flex flex-col space-y-1 p-2">
-                      <p class="text-sm font-medium leading-none">${user.name || 'Welcome'}</p>
-                      <p class="text-xs leading-none text-muted-foreground">${user.email}</p>
-                    </div>
-                    <div class="my-1 h-px bg-muted"></div> <!-- DropdownMenuSeparator -->
-                    <a href="/index.html" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                        <span>Home</span>
-                    </a>
-                    <a href="/profile.html" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <span>Profile</span>
-                    </a>
-                    ${isAdmin() ? `
-                    <a href="/admin/dashboard.html" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                        <span>Admin Dashboard</span>
-                    </a>` : ''}
-                    <div class="my-1 h-px bg-muted"></div> <!-- DropdownMenuSeparator -->
-                    <a href="#" id="logout-button" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                        <span>Log out</span>
-                    </a>
-                </div>
-            </div>
-        `;
-        authNav.innerHTML = dropdownHTML;
-
-        // Dropdown toggle logic
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userMenu = document.getElementById('user-menu');
-        userMenuButton.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent document click from closing immediately
+    // Always attach dropdown toggle and close listeners, as elements are always in DOM
+    if (userMenuButton && userMenu) {
+        userMenuButton.onclick = (event) => { // Use onclick to prevent multiple listeners
+            event.stopPropagation();
             userMenu.classList.toggle('hidden');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (event) => {
+        };
+        document.onclick = (event) => { // Use onclick for document to prevent multiple listeners
             if (userMenu && !userMenu.contains(event.target) && !userMenuButton.contains(event.target)) {
                 userMenu.classList.add('hidden');
             }
-        });
+        };
+    }
 
-        // Logout logic
-        document.getElementById('logout-button').addEventListener('click', (e) => {
+    // Always attach logout listener
+    if (logoutButton) {
+        logoutButton.onclick = (e) => { // Use onclick to prevent multiple listeners
             e.preventDefault();
             logout();
             window.location.href = '/login.html';
-        });
+        };
+    }
+
+    if (user) {
+        // User is logged in, show profile/logout, hide login/signup
+        loginButton.classList.add('hidden');
+        signupButton.classList.add('hidden');
+        userDropdown.classList.remove('hidden');
+
+        // Populate user info
+        userMenuButton.textContent = user.name ? user.name.charAt(0) : 'U';
+        userNameDisplay.textContent = user.name || 'Welcome';
+        userEmailDisplay.textContent = user.email;
+
+        // Add admin dashboard link if user is admin
+        if (isAdmin()) {
+            adminDashboardLinkContainer.innerHTML = `
+                <a href="/admin/dashboard.html" class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" role="menuitem">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Admin Dashboard</span>
+                </a>`;
+        } else {
+            adminDashboardLinkContainer.innerHTML = ''; // Clear if not admin
+        }
 
     } else {
-        // User is not logged in, show login/signup
-        authNav.innerHTML = `
-            <a href="/login.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">Log in</a>
-            <a href="/signup.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">Sign Up</a>
-        `;
+        // User is not logged in, show login/signup, hide profile/logout
+        loginButton.classList.remove('hidden');
+        signupButton.classList.remove('hidden');
+        userDropdown.classList.add('hidden');
     }
 }

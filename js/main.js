@@ -47,7 +47,7 @@ function createListingCard(listing) {
       <div class="overflow-hidden transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1 border rounded-lg">
         <div class="aspect-[3/2] relative">
             <img
-              src="${listing.imageUrls[0]}"
+              src="${listing.imageUrls && listing.imageUrls.length > 0 ? listing.imageUrls[0] : 'https://via.placeholder.com/400x300'}"
               alt="${listing.name || 'A cute dog'}"
               class="object-cover w-full h-full"
             />
@@ -159,10 +159,25 @@ async function renderListingDetail() {
         const listing = await getListingById(listingId);
 
         if (listing) {
+            const imageUrls = listing.imageUrls && listing.imageUrls.length > 0 ? listing.imageUrls : ['https://via.placeholder.com/600x400'];
+            let currentImageIndex = 0;
+
             detailContainer.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <img src="${listing.imageUrls[0]}" alt="${listing.name}" class="w-full rounded-lg shadow-lg">
+                    <div class="relative">
+                        <img id="main-listing-image" src="${imageUrls[currentImageIndex]}" alt="${listing.name}" class="w-full rounded-lg shadow-lg object-cover aspect-square">
+                        ${imageUrls.length > 1 ? `
+                        <button id="prev-image" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow-md focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </button>
+                        <button id="next-image" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white p-2 rounded-full shadow-md focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </button>
+                        ` : ''}
                     </div>
                     <div>
                         <h1 class="text-4xl font-bold">${listing.name}</h1>
@@ -188,6 +203,55 @@ async function renderListingDetail() {
                     </div>
                 </div>
             `;
+
+            if (imageUrls.length > 1) {
+                const mainImage = document.getElementById('main-listing-image');
+                const prevButton = document.getElementById('prev-image');
+                const nextButton = document.getElementById('next-image');
+
+                const updateImage = () => {
+                    mainImage.src = imageUrls[currentImageIndex];
+                };
+
+                prevButton.addEventListener('click', () => {
+                    currentImageIndex = (currentImageIndex - 1 + imageUrls.length) % imageUrls.length;
+                    updateImage();
+                });
+
+                nextButton.addEventListener('click', () => {
+                    currentImageIndex = (currentImageIndex + 1) % imageUrls.length;
+                    updateImage();
+                });
+
+                // Basic swipe detection
+                let touchStartX = 0;
+                let touchEndX = 0;
+                const minSwipeDistance = 50; // pixels
+
+                mainImage.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                });
+
+                mainImage.addEventListener('touchmove', (e) => {
+                    touchEndX = e.touches[0].clientX;
+                });
+
+                mainImage.addEventListener('touchend', () => {
+                    if (touchEndX < touchStartX - minSwipeDistance) {
+                        // Swiped left
+                        currentImageIndex = (currentImageIndex + 1) % imageUrls.length;
+                        updateImage();
+                    }
+                    if (touchEndX > touchStartX + minSwipeDistance) {
+                        // Swiped right
+                        currentImageIndex = (currentImageIndex - 1 + imageUrls.length) % imageUrls.length;
+                        updateImage();
+                    }
+                    touchStartX = 0;
+                    touchEndX = 0;
+                });
+            }
+
         } else {
             detailContainer.innerHTML = '<p>Listing not found.</p>';
         }

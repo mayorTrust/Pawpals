@@ -4,22 +4,26 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/f
 import { updateAuthNav } from './layout.js'; // Import updateAuthNav
 
 let currentUser = null; // To store the current logged-in user's data
+let authReadyPromiseResolver;
+const authReady = new Promise(resolve => {
+    authReadyPromiseResolver = resolve;
+});
 
 // Listen for auth state changes
 onAuthStateChanged(auth, async (user) => { // Use onAuthStateChanged from v9
-    console.log("Auth state changed. User:", user);
     if (user) {
         // User is signed in, fetch their data from Firestore
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
             currentUser = { uid: user.uid, ...userSnap.data() };
-            console.log("Fetched currentUser from Firestore:", currentUser);
         } else {
             console.error("User data not found in Firestore for UID:", user.uid);
             currentUser = { uid: user.uid, email: user.email, role: 'user' }; // Fallback
-            console.log("Using fallback currentUser:", currentUser);
         }
+
+        // Resolve the authReady promise once currentUser is set
+        authReadyPromiseResolver(user);
 
         // Redirect logged-in users from login/signup pages
         const path = window.location.pathname;
@@ -33,11 +37,10 @@ onAuthStateChanged(auth, async (user) => { // Use onAuthStateChanged from v9
     } else {
         // User is signed out
         currentUser = null;
-        console.log("User is signed out. currentUser is null.");
+        authReadyPromiseResolver(null); // Resolve with null if user is signed out
     }
     // Update UI elements that depend on auth state (e.g., header nav)
     updateAuthNav(); // Call updateAuthNav directly
-    console.log("updateAuthNav() called.");
 });
 
 async function login(email, password) {
@@ -100,4 +103,4 @@ function isAdmin() {
     return currentUser && currentUser.role === 'admin';
 }
 
-export { login, signup, logout, getLoggedInUser, isLoggedIn, isAdmin };
+export { login, signup, logout, getLoggedInUser, isLoggedIn, isAdmin, authReady };

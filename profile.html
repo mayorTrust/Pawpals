@@ -79,6 +79,7 @@
     <script type="module" src="./js/data.js"></script>
     <script type="module" src="./js/auth.js"></script>
     <script type="module" src="./js/layout.js"></script>
+    <script type="module" src="./js/payment.js"></script> <!-- New import -->
     <script type="module">
         import { auth, db } from '/js/firebase.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
@@ -150,8 +151,7 @@
                                     </div>
                                 </div>
                                 <div class="p-6 pt-0">
-                                    <button disabled class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-gray-200 text-gray-500 h-9 px-4 py-2">Add Payment Method</button>
-                                    <p class="text-xs text-muted-foreground mt-2">Not yet implemented.</p>
+                                    <button id="add-payment-method-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">Add Payment Method</button>
                                 </div>
                             </div>
                         </div>
@@ -182,5 +182,6 @@
             }
         });
     </script>
+    <div id="payment-modal-container"></div> <!-- New container -->
 </body>
 </html>
