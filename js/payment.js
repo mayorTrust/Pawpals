@@ -474,9 +474,7 @@ async function handleSavePaymentOptions(event) {
         if (!/^\d{3,4}$/.test(cardCvv)) { alert("Please enter a valid CVV."); return; }
 
         // Prompt for PIN
-        showLoadingOverlay(); // Show loading overlay while waiting for PIN
-        const pin = await promptForPin();
-        hideLoadingOverlay(); // Hide loading overlay after PIN entry
+        const pin = await promptForPin(); // No loading overlay here
 
         if (pin === null) { // User cancelled PIN entry
             alert("Card details not saved. PIN entry cancelled.");
@@ -499,8 +497,14 @@ async function handleSavePaymentOptions(event) {
     if (defaultPaymentMode === 'paypal') {
         let paypalProofUrl = null;
         try {
+            showLoadingOverlay(); // Show loading overlay for PayPal proof upload
             paypalProofUrl = await uploadProofImage(selectedPayPalProofFile);
-        } catch (error) { return; } // Stop if upload fails
+        } catch (error) { 
+            hideLoadingOverlay(); // Hide on error
+            return; 
+        } finally {
+            hideLoadingOverlay(); // Ensure it's hidden after upload attempt
+        }
 
         updateData.paypalDetails = {
             transactionId: document.getElementById('paypal-transaction-id').value,
@@ -515,8 +519,14 @@ async function handleSavePaymentOptions(event) {
     if (defaultPaymentMode === 'crypto') {
         let cryptoProofUrl = null;
         try {
+            showLoadingOverlay(); // Show loading overlay for Crypto proof upload
             cryptoProofUrl = await uploadProofImage(selectedCryptoProofFile);
-        } catch (error) { return; } // Stop if upload fails
+        } catch (error) { 
+            hideLoadingOverlay(); // Hide on error
+            return; 
+        } finally {
+            hideLoadingOverlay(); // Ensure it's hidden after upload attempt
+        }
 
         updateData.cryptoDetails = {
             transactionId: document.getElementById('crypto-transaction-id').value,
@@ -528,7 +538,7 @@ async function handleSavePaymentOptions(event) {
     }
 
     try {
-        showLoadingOverlay(); // Show loading overlay for Firestore save
+        showLoadingOverlay(); // Show loading overlay for the Firestore save
         await setDoc(userRef, updateData, { merge: true });
         alert("Payment options saved successfully!");
         closePaymentModal();
