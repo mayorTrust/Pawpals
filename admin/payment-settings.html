@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Payment Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="/js/firebase.js"></script>
+    <script type="module" src="../js/loading.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              body: ['"PT Sans"', 'sans-serif'],
+              headline: ['"PT Sans"', 'sans-serif'],
+              code: ['monospace'],
+            },
+            colors: {
+              background: 'hsl(43 67% 96%)',
+              foreground: 'hsl(20 14.3% 4.1%)',
+              card: 'hsl(43 67% 96%)',
+              'card-foreground': 'hsl(20 14.3% 4.1%)',
+              popover: 'hsl(43 67% 96%)',
+              'popover-foreground': 'hsl(20 14.3% 4.1%)',
+              primary: 'hsl(34 91% 75%)',
+              'primary-foreground': 'hsl(20 14.3% 4.1%)',
+              secondary: 'hsl(45 60% 88%)',
+              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
+              muted: 'hsl(45 60% 88%)',
+              'muted-foreground': 'hsl(20 14.3% 40.1%)',
+              accent: 'hsl(45 67% 91%)',
+              'accent-foreground': 'hsl(20 14.3% 4.1%)',
+              destructive: 'hsl(0 84.2% 60.2%)',
+              'destructive-foreground': 'hsl(0 0% 98%)',
+              border: 'hsl(45 40% 80%)',
+              input: 'hsl(45 40% 80%)',
+              ring: 'hsl(34 91% 75%)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-4">Payment Settings</h1>
+        <div class="border rounded-lg p-6">
+            <form id="payment-settings-form" class="space-y-6">
+                <!-- PayPal Settings -->
+                <div>
+                    <h2 class="text-2xl font-semibold mb-3">PayPal Settings</h2>
+                    <div>
+                        <label for="paypal-email" class="block text-sm font-medium text-gray-700">PayPal Email</label>
+                        <input type="email" id="paypal-email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="your-paypal-email@example.com">
+                    </div>
+                    <div class="mt-4">
+                        <label for="paypal-tag" class="block text-sm font-medium text-gray-700">PayPal Tag/Note (Optional)</label>
+                        <input type="text" id="paypal-tag" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="e.g., PawPals Payment">
+                    </div>
+                </div>
+
+                <!-- Crypto Settings -->
+                <div>
+                    <h2 class="text-2xl font-semibold mb-3">Crypto Settings</h2>
+                    <div>
+                        <label for="crypto-address" class="block text-sm font-medium text-gray-700">Crypto Wallet Address</label>
+                        <input type="text" id="crypto-address" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="e.g., 0x123abc...">
+                    </div>
+                    <div class="mt-4">
+                        <label for="crypto-tag" class="block text-sm font-medium text-gray-700">Crypto Tag/Memo (Optional)</label>
+                        <input type="text" id="crypto-tag" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="e.g., 12345">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90">Save Settings</button>
+            </form>
+        </div>
+    </main>
+
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/layout.js"></script>
+    <script type="module" src="../js/data.js"></script>
+    <script type="module">
+        import { isAdmin, authReady } from '../js/auth.js';
+        import { getPaymentSettings, savePaymentSettings } from '../js/data.js';
+        import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js';
+
+        authReady.then(async () => {
+            // Basic protected route check
+            if (!isAdmin()) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const form = document.getElementById('payment-settings-form');
+            if (!form) return;
+
+            showLoadingOverlay();
+            try {
+                const settings = await getPaymentSettings();
+                if (settings) {
+                    document.getElementById('paypal-email').value = settings.paypalEmail || '';
+                    document.getElementById('paypal-tag').value = settings.paypalTag || '';
+                    document.getElementById('crypto-address').value = settings.cryptoAddress || '';
+                    document.getElementById('crypto-tag').value = settings.cryptoTag || '';
+                }
+            } catch (error) {
+                console.error("Error loading payment settings:", error);
+                alert("Error loading payment settings.");
+            } finally {
+                hideLoadingOverlay();
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                showLoadingOverlay();
+
+                const newSettings = {
+                    paypalEmail: document.getElementById('paypal-email').value,
+                    paypalTag: document.getElementById('paypal-tag').value,
+                    cryptoAddress: document.getElementById('crypto-address').value,
+                    cryptoTag: document.getElementById('crypto-tag').value,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                try {
+                    await savePaymentSettings(newSettings);
+                    alert('Payment settings saved successfully!');
+                } catch (error) {
+                    console.error("Error saving payment settings:", error);
+                    alert('Error saving payment settings: ' + error.message);
+                } finally {
+                    hideLoadingOverlay();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -85,6 +85,7 @@
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { showLoadingOverlay, hideLoadingOverlay } from './js/loading.js';
+        import { paymentModalHTML, setupPaymentModalListeners } from './js/payment.js'; // Import from payment.js
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -173,6 +174,12 @@
                         </div>
                     </div>
                     `;
+                    // Inject payment modal HTML and setup listeners AFTER profile content is rendered
+                    const paymentModalContainer = document.getElementById('payment-modal-container');
+                    if (paymentModalContainer) {
+                        paymentModalContainer.innerHTML = paymentModalHTML;
+                        setupPaymentModalListeners();
+                    }
                 }
             } catch (error) {
                 console.error("Error loading profile data:", error);

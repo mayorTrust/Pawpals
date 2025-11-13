@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Function to fetch all listings
 async function getListings() {
@@ -56,4 +56,48 @@ async function deleteListing(id) {
     }
 }
 
-export { getListings, getListingById, addListing, updateListing, deleteListing };
+// Function to fetch all users
+async function getAllUsers() {
+    const usersCol = collection(db, 'users');
+    const userSnapshot = await getDocs(usersCol);
+    const usersList = userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return usersList;
+}
+
+// Function to fetch a single user by ID
+async function getUserById(id) {
+    const userRef = doc(db, 'users', id);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+        return { id: userSnap.id, ...userSnap.data() };
+    } else {
+        console.log("No such user document!");
+        return null;
+    }
+}
+
+// Function to fetch global payment settings
+async function getPaymentSettings() {
+    const settingsRef = doc(db, 'appSettings', 'global');
+    const settingsSnap = await getDoc(settingsRef);
+    if (settingsSnap.exists()) {
+        return settingsSnap.data();
+    } else {
+        console.log("No global payment settings found.");
+        return null;
+    }
+}
+
+// Function to save global payment settings
+async function savePaymentSettings(settingsData) {
+    try {
+        const settingsRef = doc(db, 'appSettings', 'global');
+        await setDoc(settingsRef, settingsData, { merge: true });
+        console.log("Payment settings saved successfully.");
+    } catch (e) {
+        console.error("Error saving payment settings: ", e);
+        throw e;
+    }
+}
+
+export { getListings, getListingById, addListing, updateListing, deleteListing, getAllUsers, getUserById, getPaymentSettings, savePaymentSettings };
