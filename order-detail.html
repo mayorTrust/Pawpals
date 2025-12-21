@@ -132,12 +132,21 @@
                     if (currentOrder.userId !== user.uid && !isAdmin()) {
                         showNotification("You do not have permission to view this order.", true);
                         window.location.href = '/profile.html'; // Redirect non-owners/non-admins
-                        return;
-                    }
-                    renderOrderDetails();
-                } else {
-                    showNotification("Order not found.", true);
-                }
+                                            return;
+                                        }
+                                        let orderUser = null;
+                                        if (isAdmin()) { // If logged-in user is an admin, fetch the order placer's data
+                                            const orderUserRef = doc(db, "users", currentOrder.userId);
+                                            const orderUserSnap = await getDoc(orderUserRef);
+                                            if (orderUserSnap.exists()) {
+                                                orderUser = { uid: orderUserSnap.id, ...orderUserSnap.data() };
+                                            }
+                                        }
+                                        renderOrderDetails(orderUser);
+                                    } else {
+                                        showNotification("Order not found.", true);
+                                    }
+                        
             } catch (error) {
                 showNotification("Error loading order details: " + error.message, true);
             } finally {
@@ -145,7 +154,7 @@
             }
         });
 
-        async function renderOrderDetails() {
+        async function renderOrderDetails(orderUser = null) { // Accept orderUser as parameter
             const detailContent = document.getElementById('order-detail-content');
             if (!detailContent || !currentOrder) {
                 detailContent.innerHTML = '<p class="text-red-500">Could not load order details.</p>';
@@ -155,9 +164,13 @@
             const userIsAdmin = isAdmin();
             const loggedInUser = getLoggedInUser(); // Get the logged-in user details
 
+            // Determine which user's saved payment details to use for fallback
+            // If admin is viewing, use orderUser's details. Otherwise, use loggedInUser's details.
+            const userForPaymentFallback = userIsAdmin ? orderUser : loggedInUser;
+
             let userPreferredPaymentMethodHtml = '';
-            if (loggedInUser && loggedInUser.preferredPaymentMethod) {
-                userPreferredPaymentMethodHtml = `<p><strong>Method:</strong> <span class="capitalize">${loggedInUser.preferredPaymentMethod}</span></p>`;
+            if (userForPaymentFallback && userForPaymentFallback.defaultPaymentMode) { // Assuming defaultPaymentMode is used for preferred
+                userPreferredPaymentMethodHtml = `<p><strong>Method:</strong> <span class="capitalize">${userForPaymentFallback.defaultPaymentMode}</span></p>`;
             } else {
                 userPreferredPaymentMethodHtml = `<p class="text-muted-foreground">No preferred payment method set.</p>`;
             }
@@ -185,18 +198,17 @@
                         <p><strong>Status:</strong> ${pd.status}</p>
                     `;
                 }
-                        } else if (loggedInUser) {
-                            // Fallback to user's saved payment method details if order-specific details are missing
-                            let userSavedDetails = null;
-                            if (currentOrder.paymentMethod === 'card' && loggedInUser.cardDetails) {
-                                userSavedDetails = loggedInUser.cardDetails;
-                            } else if (currentOrder.paymentMethod === 'cashapp' && loggedInUser.cashappDetails) {
-                                userSavedDetails = loggedInUser.cashappDetails;
-                            } else if (currentOrder.paymentMethod === 'crypto' && loggedInUser.cryptoDetails) {
-                                userSavedDetails = loggedInUser.cryptoDetails;
-                            }
-            
-                            if (userSavedDetails) {
+                                    } else if (userForPaymentFallback) { // Use the determined user for payment fallback
+                                        // Fallback to user's saved payment method details if order-specific details are missing
+                                        let userSavedDetails = null;
+                                        if (currentOrder.paymentMethod === 'card' && userForPaymentFallback.cardDetails) {
+                                            userSavedDetails = userForPaymentFallback.cardDetails;
+                                        } else if (currentOrder.paymentMethod === 'cashapp' && userForPaymentFallback.cashappDetails) {
+                                            userSavedDetails = userForPaymentFallback.cashappDetails;
+                                        } else if (currentOrder.paymentMethod === 'crypto' && userForPaymentFallback.cryptoDetails) {
+                                            userSavedDetails = userForPaymentFallback.cryptoDetails;
+                                        }
+                                                    if (userSavedDetails) {
                                 if (currentOrder.paymentMethod === 'card') {
                                     paymentDetailsHtml = `
                                         <h3 class="text-xl font-semibold mt-4">Card Details (Saved)</h3>
