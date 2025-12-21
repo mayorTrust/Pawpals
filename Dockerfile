@@ -1,15 +1,3 @@
-# Stage 1: Build frontend assets
-FROM node:20-alpine AS frontend-builder
-
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm install
-
-COPY tailwind.config.js postcss.config.js ./
-COPY src/input.css ./src/
-RUN npm run build:css
-
 # Stage 2: Setup PHP application with Apache
 FROM php:8.2-apache
 
@@ -28,14 +16,14 @@ COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy built frontend assets from the frontend-builder stage
-COPY --from=frontend-builder /app/dist ./dist
+# Copy the pre-built frontend assets from the host context
+COPY dist ./dist
 
 # Copy the rest of the application code
 COPY . .
 
-# Remove the node_modules and src folder that are not needed in the final image
-RUN rm -rf node_modules src
+# Remove the src folder if it contains only frontend source files and is not needed in the final image
+RUN rm -rf src
 
 # Configure Apache to use .htaccess for URL rewriting (e.g., for routing)
 RUN a2enmod rewrite
