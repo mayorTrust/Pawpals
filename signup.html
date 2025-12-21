@@ -4,43 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Sign Up</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/dist/output.css">
     <script type="module" src="/js/firebase.js"></script>
     <script type="module" src="./js/loading.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              body: ['"PT Sans"', 'sans-serif'],
-              headline: ['"PT Sans"', 'sans-serif'],
-              code: ['monospace'],
-            },
-            colors: {
-              background: 'hsl(43 67% 96%)',
-              foreground: 'hsl(20 14.3% 4.1%)',
-              card: 'hsl(43 67% 96%)',
-              'card-foreground': 'hsl(20 14.3% 4.1%)',
-              popover: 'hsl(43 67% 96%)',
-              'popover-foreground': 'hsl(20 14.3% 4.1%)',
-              primary: 'hsl(34 91% 75%)',
-              'primary-foreground': 'hsl(20 14.3% 4.1%)',
-              secondary: 'hsl(45 60% 88%)',
-              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
-              muted: 'hsl(45 60% 88%)',
-              'muted-foreground': 'hsl(20 14.3% 40.1%)',
-              accent: 'hsl(45 67% 91%)',
-              'accent-foreground': 'hsl(20 14.3% 4.1%)',
-              destructive: 'hsl(0 84.2% 60.2%)',
-              'destructive-foreground': 'hsl(0 0% 98%)',
-              border: 'hsl(45 40% 80%)',
-              input: 'hsl(45 40% 80%)',
-              ring: 'hsl(34 91% 75%)',
-            }
-          }
-        }
-      }
-    </script>
+    
     <style>
 #loading-overlay {
   position: fixed;
@@ -115,7 +82,11 @@
 
     <script type="module" src="./js/auth.js"></script>
     <script type="module" src="./js/layout.js"></script>
+    <script type="module" src="./js/notification.js"></script>
     <script type="module">
+        import { signup } from './js/auth.js';
+        import { showNotification } from './js/notification.js';
+
         document.getElementById('signup-form').addEventListener('submit', async (event) => {
             event.preventDefault();
             const name = event.target.name.value;
@@ -126,15 +97,16 @@
             signupButton.disabled = true;
             signupButton.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             
-            const { signup } = await import('./js/auth.js');
             const user = await signup(name, email, password);
 
             signupButton.disabled = false;
             signupButton.innerHTML = 'Create an account';
 
             if (user) {
-                alert('Sign up successful! Please log in.');
-                window.location.href = '/login.html';
+                showNotification('Sign up successful! Please log in.', false);
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000); // Redirect after 2 seconds
             }
         });
     </script>

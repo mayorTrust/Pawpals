@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your PawPals Payment is Confirmed!</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #28a745; /* Green for success */
+            padding: 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px 30px;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        .order-summary {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .order-summary p {
+            margin: 5px 0;
+        }
+        .button-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .button {
+            background-color: hsl(34 91% 75%);
+            color: #ffffff;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Payment Confirmed for Your PawPals Order!</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{userName}},</p>
+            <p>Great news! Your payment for order <strong>#{{orderId}}</strong> has been successfully confirmed. Your adoption of {{listingName}} is now one step closer!</p>
+            
+            <div class="order-summary">
+                <p><strong>Order Details:</strong></p>
+                <p>Pet: {{listingName}}</p>
+                <p>Price: ${{listingPrice}}</p>
+                <p>Payment Method: {{paymentMethod}}</p>
+                <p>Status: {{orderStatus}}</p>
+            </div>
+
+            <p>We're now preparing {{listingName}} for shipment. You will receive another email notification once your order has been shipped.</p>
+            <p>You can track the progress of your order here:</p>
+            <div class="button-container">
+                <a href="http://localhost:8000/order-detail.html?id={{orderId}}" class="button">View Order Details</a>
+            </div>
+            <p>Thank you for your patience and for choosing PawPals!</p>
+            <p>The PawPals Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{currentYear}} PawPals Inc. All rights reserved.</p>
+            <p>123 Pet Lover Lane, Animal City, PC 12345</p>
+        </div>
+    </div>
+</body>
+</html>

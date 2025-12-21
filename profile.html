@@ -4,43 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - My Profile</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/dist/output.css">
     <script type="module" src="/js/firebase.js"></script>
     <script type="module" src="./js/loading.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              body: ['"PT Sans"', 'sans-serif'],
-              headline: ['"PT Sans"', 'sans-serif'],
-              code: ['monospace'],
-            },
-            colors: {
-              background: 'hsl(43 67% 96%)',
-              foreground: 'hsl(20 14.3% 4.1%)',
-              card: 'hsl(43 67% 96%)',
-              'card-foreground': 'hsl(20 14.3% 4.1%)',
-              popover: 'hsl(43 67% 96%)',
-              'popover-foreground': 'hsl(20 14.3% 4.1%)',
-              primary: 'hsl(34 91% 75%)',
-              'primary-foreground': 'hsl(20 14.3% 4.1%)',
-              secondary: 'hsl(45 60% 88%)',
-              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
-              muted: 'hsl(45 60% 88%)',
-              'muted-foreground': 'hsl(20 14.3% 40.1%)',
-              accent: 'hsl(45 67% 91%)',
-              'accent-foreground': 'hsl(20 14.3% 4.1%)',
-              destructive: 'hsl(0 84.2% 60.2%)',
-              'destructive-foreground': 'hsl(0 0% 98%)',
-              border: 'hsl(45 40% 80%)',
-              input: 'hsl(45 40% 80%)',
-              ring: 'hsl(34 91% 75%)',
-            }
-          }
-        }
-      }
-    </script>
+    
     <style>
 #loading-overlay {
   position: fixed;
@@ -83,9 +50,10 @@
     <script type="module">
         import { auth, db } from '/js/firebase.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { showLoadingOverlay, hideLoadingOverlay } from './js/loading.js';
-        import { paymentModalHTML, setupPaymentModalListeners } from './js/payment.js'; // Import from payment.js
+        import { paymentModalHTML, setupPaymentModalListeners, openPaymentModal } from './js/payment.js'; // Import from payment.js
+        import { showNotification } from './js/notification.js';
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -94,6 +62,7 @@
             }
 
             showLoadingOverlay();
+            const profileContent = document.getElementById('profile-content');
             try {
                 const userRef = doc(db, "users", user.uid);
                 const userSnap = await getDoc(userRef);
@@ -105,13 +74,57 @@
                     console.error("User data not found in Firestore for UID:", user.uid);
                     userData = { uid: user.uid, email: user.email, name: user.email, role: 'user' }; // Fallback
                 }
-                
-                const profileContent = document.getElementById('profile-content');
 
                 const getInitials = (name) => {
                     if (!name) return 'U';
                     return name.split(' ').map((n) => n[0]).join('');
                 };
+
+                // Fetch user's orders
+                const ordersQuery = query(collection(db, "orders"), where("userId", "==", user.uid));
+                const ordersSnapshot = await getDocs(ordersQuery);
+                const orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                let ordersHtml = '';
+                if (orders.length > 0) {
+                    ordersHtml = `
+                        <div class="mt-8">
+                            <h2 class="text-2xl font-semibold mb-4">Order History</h2>
+                            <div class="border rounded-lg overflow-hidden overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listing</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${orders.map(order => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.id}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.listingName}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.listingPrice.toLocaleString()}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${order.paymentMethod}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${order.status}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.orderDate).toLocaleDateString()}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <a href="/order-detail.html?id=${order.id}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    ordersHtml = `<div class="mt-8"><h2 class="text-2xl font-semibold mb-4">Order History</h2><p class="text-muted-foreground">You have no orders yet.</p></div>`;
+                }
 
                 if (userData && profileContent) {
                     profileContent.innerHTML = `
@@ -156,38 +169,57 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div>
-                            <h2 class="text-3xl font-bold font-headline mb-6 flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                                Order History
-                            </h2>
-                            <div class="border rounded-lg">
-                                <div class="p-6">
-                                    <div class="text-center text-muted-foreground py-8">
-                                        <p>You have no active orders.</p>
-                                        <p>Ready to find a new friend?</p>
-                                        <a href="listings.html" class="text-primary hover:underline mt-2 inline-block">Browse Listings</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        ${ordersHtml}
                     </div>
                     `;
                     // Inject payment modal HTML and setup listeners AFTER profile content is rendered
                     const paymentModalContainer = document.getElementById('payment-modal-container');
                     if (paymentModalContainer) {
                         paymentModalContainer.innerHTML = paymentModalHTML;
-                        setupPaymentModalListeners();
                     }
+                    setupPaymentModalListeners(); // Call here, after elements are in DOM
+
+                    // Manually attach listener for the button on this page
+                    const addPaymentBtnOnProfile = document.getElementById('add-payment-method-btn');
+                    if (addPaymentBtnOnProfile) {
+                        addPaymentBtnOnProfile.addEventListener('click', openPaymentModal);
+                    }
+
+                    // Attach event listeners to delete buttons
+                    document.querySelectorAll('.delete-order-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const orderIdToDelete = e.target.dataset.orderId;
+                            handleDeleteOrder(orderIdToDelete);
+                        });
+                    });
                 }
             } catch (error) {
-                console.error("Error loading profile data:", error);
+                showNotification("Error loading profile data: " + error.message, true);
                 profileContent.innerHTML = '<p class="text-red-500">Error loading profile data.</p>';
             } finally {
                 hideLoadingOverlay();
             }
         });
+
+        async function handleDeleteOrder(orderId) {
+            showConfirmation("Are you sure you want to delete this order? This action cannot be undone.", async () => {
+                showLoadingOverlay();
+                try {
+                    await deleteDoc(doc(db, "orders", orderId));
+                    showNotification("Order deleted successfully!", false);
+                    // Re-render the profile content to update the order list
+                    // This is a bit heavy, but ensures the list is fresh.
+                    // A more optimized approach would be to remove the row directly.
+                    // For now, re-rendering the whole profile is simpler.
+                    onAuthStateChanged(auth, () => {}); // Trigger re-render by re-running auth check
+                } catch (error) {
+                    console.error("Error deleting order: ", error);
+                    showNotification("Error deleting order: " + error.message, true);
+                } finally {
+                    hideLoadingOverlay();
+                }
+            });
+        }
     </script>
     <div id="payment-modal-container"></div> <!-- New container -->
 </body>

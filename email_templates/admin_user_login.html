@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Notification: User Login</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: hsl(34 91% 75%);
+            padding: 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px 30px;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        .details {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .details p {
+            margin: 5px 0;
+        }
+        .footer {
+            background-color: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Admin Notification: User Login</h1>
+        </div>
+        <div class="content">
+            <p>Hello Admin,</p>
+            <p>A user has just logged into their PawPals account.</p>
+            
+            <div class="details">
+                <p><strong>User Details:</strong></p>
+                <p>Name: {{userName}}</p>
+                <p>Email: {{userEmail}}</p>
+                <p>Login Time: {{loginTime}}</p>
+            </div>
+
+            <p>Please ensure all account activities are legitimate.</p>
+            <p>Thank you,</p>
+            <p>PawPals Admin System</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{currentYear}} PawPals Inc. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

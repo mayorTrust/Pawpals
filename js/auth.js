@@ -2,6 +2,8 @@ import { auth, db } from './firebase.js';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import { updateAuthNav } from './layout.js'; // Import updateAuthNav
+import { showNotification } from './notification.js';
+import { sendTemplatedEmail, getAdminEmail } from './email.js'; // Import sendTemplatedEmail and getAdminEmail
 
 let currentUser = null; // To store the current logged-in user's data
 let authReadyPromiseResolver;
@@ -10,37 +12,60 @@ const authReady = new Promise(resolve => {
 });
 
 // Listen for auth state changes
-onAuthStateChanged(auth, async (user) => { // Use onAuthStateChanged from v9
-    if (user) {
-        // User is signed in, fetch their data from Firestore
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-            currentUser = { uid: user.uid, ...userSnap.data() };
-        } else {
-            console.error("User data not found in Firestore for UID:", user.uid);
-            currentUser = { uid: user.uid, email: user.email, role: 'user' }; // Fallback
-        }
-
-        // Resolve the authReady promise once currentUser is set
-        authReadyPromiseResolver(user);
-
-        // Redirect logged-in users from login/signup pages
-        const path = window.location.pathname;
-        if (path.endsWith('/login.html') || path.endsWith('/signup.html')) {
-            if (currentUser.role === 'admin') {
-                window.location.href = '/admin/dashboard.html';
+onAuthStateChanged(auth, async (user) => {
+    try {
+        if (user) {
+            // User is signed in, fetch their data from Firestore
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                currentUser = { uid: user.uid, ...userSnap.data() };
             } else {
-                window.location.href = '/profile.html';
+                console.error("User data not found in Firestore for UID:", user.uid);
+                currentUser = { uid: user.uid, email: user.email, role: 'user' }; // Fallback
             }
+
+            // Send admin notification email for user login, only once per session
+            if (!localStorage.getItem('adminLoginEmailSent')) {
+                const adminEmail = await getAdminEmail();
+                if (adminEmail) {
+                    sendTemplatedEmail(
+                        adminEmail,
+                        'User Login Notification',
+                        '/email_templates/admin_user_login.html',
+                        {
+                            userName: currentUser.name || currentUser.email,
+                            userEmail: currentUser.email,
+                            loginTime: new Date().toLocaleString()
+                        }
+                    );
+                    localStorage.setItem('adminLoginEmailSent', 'true'); // Set flag
+                }
+            }
+
+            // Redirect logged-in users from login/signup pages
+            const path = window.location.pathname;
+            if (path.endsWith('/login.html') || path.endsWith('/signup.html')) {
+                if (currentUser.role === 'admin') {
+                    window.location.href = '/admin/dashboard.html';
+                } else {
+                    window.location.href = '/profile.html';
+                }
+            }
+        } else {
+            // User is signed out
+            currentUser = null;
+            localStorage.removeItem('adminLoginEmailSent'); // Clear flag on logout
         }
-    } else {
-        // User is signed out
-        currentUser = null;
-        authReadyPromiseResolver(null); // Resolve with null if user is signed out
+    } catch (error) {
+        console.error("Error during auth state change:", error);
+        currentUser = null; // Ensure user is logged out on error
+    } finally {
+        // Resolve the authReady promise once everything is done
+        authReadyPromiseResolver(currentUser);
+        // Update UI elements that depend on auth state (e.g., header nav)
+        updateAuthNav();
     }
-    // Update UI elements that depend on auth state (e.g., header nav)
-    updateAuthNav(); // Call updateAuthNav directly
 });
 
 async function login(email, password) {
@@ -52,7 +77,7 @@ async function login(email, password) {
         return currentUser;
     } catch (error) {
         console.error('Login failed:', error.message);
-        alert('Login failed: ' + error.message);
+        showNotification('Login failed: ' + error.message, true);
         return null;
     }
 }
@@ -70,11 +95,21 @@ async function signup(name, email, password) {
         });
 
         console.log('Signup successful for:', user.email);
+        showNotification('Signup successful!', false);
+
+        // Send welcome email to user
+        sendTemplatedEmail(
+            email,
+            'Welcome to PawPals!',
+            '/email_templates/welcome.html',
+            { userName: name }
+        );
+        
         // Redirection is now handled by onAuthStateChanged listener
         return currentUser;
     } catch (error) {
         console.error('Signup failed:', error.message);
-        alert('Signup failed: ' + error.message);
+        showNotification('Signup failed: ' + error.message, true);
         return null;
     }
 }
@@ -83,11 +118,12 @@ async function logout() {
     try {
         await signOut(auth);
         console.log('User logged out.');
+        localStorage.removeItem('adminLoginEmailSent'); // Clear flag on logout
         // currentUser will be set to null by onAuthStateChanged listener
         window.location.href = '/login.html'; // Redirect after logout
     } catch (error) {
         console.error('Logout failed:', error.message);
-        alert('Logout failed: ' + error.message);
+        showNotification('Logout failed: ' + error.message, true);
     }
 }
 

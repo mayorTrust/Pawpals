@@ -3,6 +3,8 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/f
 import { getLoggedInUser } from './auth.js';
 import { getPaymentSettings } from './data.js'; // Import getPaymentSettings
 import { showLoadingOverlay, hideLoadingOverlay } from './loading.js'; // Import loading functions
+import { showNotification } from './notification.js';
+import { sendTemplatedEmail, getAdminEmail } from './email.js';
 
 export const paymentModalHTML = `
 <div id="payment-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 flex justify-center items-center">
@@ -162,12 +164,20 @@ export const paymentModalHTML = `
 let selectedPayPalProofFile = null;
 let selectedCryptoProofFile = null;
 let resolvePinPromise = null; // To resolve the PIN entry promise
+let modalClosePromiseResolver = null; // To resolve the modal close promise
 
 export function setupPaymentModalListeners() {
-    const addPaymentMethodBtn = document.getElementById('add-payment-method-btn');
+    // This function sets up listeners for elements *inside* the payment modal.
+    // It should be called only once when the modal is injected into the DOM.
+
     const paymentModal = document.getElementById('payment-modal');
     const closePaymentModalBtn = document.getElementById('close-payment-modal');
     const paymentOptionsForm = document.getElementById('payment-options-form');
+
+    // If the modal itself isn't on the page, do nothing.
+    if (!paymentModal) {
+        return;
+    }
 
     const defaultPaymentModeRadios = document.querySelectorAll('input[name="defaultPaymentMode"]');
     const cardDetailsSection = document.getElementById('card-details-section');
@@ -181,27 +191,20 @@ export function setupPaymentModalListeners() {
 
     // PIN Modal elements
     const pinModal = document.getElementById('pin-modal');
-    const closePinModalBtn = document.getElementById('close-pin-modal');
+    const closePinModalBtnFromPin = document.getElementById('close-pin-modal');
     const cardPinInput = document.getElementById('card-pin');
     const cancelPinEntryBtn = document.getElementById('cancel-pin-entry');
     const confirmPinEntryBtn = document.getElementById('confirm-pin-entry');
 
-
-    if (addPaymentMethodBtn) {
-        addPaymentMethodBtn.addEventListener('click', openPaymentModal);
-    } else {
-        console.error('payment.js: addPaymentMethodBtn not found!');
-    }
     if (closePaymentModalBtn) {
         closePaymentModalBtn.addEventListener('click', closePaymentModal);
     }
-    if (paymentModal) {
-        paymentModal.addEventListener('click', (e) => {
-            if (e.target === paymentModal) {
-                closePaymentModal();
-            }
-        });
-    }
+    
+    paymentModal.addEventListener('click', (e) => {
+        if (e.target === paymentModal) {
+            closePaymentModal();
+        }
+    });
 
     // Handle payment mode selection
     defaultPaymentModeRadios.forEach(radio => {
@@ -259,23 +262,29 @@ export function setupPaymentModalListeners() {
 
     // PIN Modal Listeners
     if (pinModal) {
-        closePinModalBtn.addEventListener('click', () => {
-            pinModal.classList.add('hidden');
-            if (resolvePinPromise) resolvePinPromise(null); // Resolve with null on close/cancel
-        });
-        cancelPinEntryBtn.addEventListener('click', () => {
-            pinModal.classList.add('hidden');
-            if (resolvePinPromise) resolvePinPromise(null); // Resolve with null on close/cancel
-        });
-        confirmPinEntryBtn.addEventListener('click', () => {
-            const pin = cardPinInput.value;
-            if (pin.length === 4 && /^\d+$/.test(pin)) {
+        if(closePinModalBtnFromPin) {
+            closePinModalBtnFromPin.addEventListener('click', () => {
                 pinModal.classList.add('hidden');
-                if (resolvePinPromise) resolvePinPromise(pin);
-            } else {
-                alert('Please enter a valid 4-digit PIN.');
-            }
-        });
+                if (resolvePinPromise) resolvePinPromise(null); // Resolve with null on close/cancel
+            });
+        }
+        if(cancelPinEntryBtn) {
+            cancelPinEntryBtn.addEventListener('click', () => {
+                pinModal.classList.add('hidden');
+                if (resolvePinPromise) resolvePinPromise(null); // Resolve with null on close/cancel
+            });
+        }
+        if(confirmPinEntryBtn) {
+            confirmPinEntryBtn.addEventListener('click', () => {
+                const pin = cardPinInput.value;
+                if (pin.length === 4 && /^\d{4}$/.test(pin)) {
+                    pinModal.classList.add('hidden');
+                    if (resolvePinPromise) resolvePinPromise(pin);
+                } else {
+                    showNotification('Please enter a valid 4-digit PIN.', true);
+                }
+            });
+        }
     }
 
     if (paymentOptionsForm) {
@@ -283,18 +292,25 @@ export function setupPaymentModalListeners() {
     }
 }
 
-export async function openPaymentModal() {
+export function openPaymentModal() {
     const paymentModal = document.getElementById('payment-modal');
     if (paymentModal) {
         paymentModal.classList.remove('hidden');
-        await loadPaymentDetails();
+        loadPaymentDetails();
     }
+    return new Promise(resolve => {
+        modalClosePromiseResolver = resolve;
+    });
 }
 
 export function closePaymentModal() {
     const paymentModal = document.getElementById('payment-modal');
     if (paymentModal) {
         paymentModal.classList.add('hidden');
+    }
+    if (modalClosePromiseResolver) {
+        modalClosePromiseResolver();
+        modalClosePromiseResolver = null;
     }
 }
 
@@ -319,7 +335,7 @@ async function uploadProofImage(file) {
         return result.urls[0]; // Assuming single file upload for proof
     } catch (error) {
         console.error("Error uploading proof image: ", error);
-        alert('Error uploading proof image: ' + error.message);
+        showNotification('Error uploading proof image: ' + error.message, true);
         throw error; // Re-throw to stop further processing
     }
 }
@@ -340,7 +356,7 @@ function promptForPin() {
 async function loadPaymentDetails() {
     const user = getLoggedInUser();
     if (!user) {
-        console.error("No user logged in to load payment details.");
+        showNotification("No user logged in to load payment details.", true);
         return;
     }
 
@@ -441,7 +457,7 @@ async function handleSavePaymentOptions(event) {
     event.preventDefault();
     const user = getLoggedInUser();
     if (!user) {
-        alert("Please log in to save payment options.");
+        showNotification("Please log in to save payment options.", true);
         return;
     }
 
@@ -468,16 +484,16 @@ async function handleSavePaymentOptions(event) {
         const cardExpiry = document.getElementById('card-expiry').value;
         const cardCvv = document.getElementById('card-cvv').value;
 
-        if (!cardType) { alert("Please select a card type."); return; }
-        if (!/^\d{13,19}$/.test(cardNumber)) { alert("Please enter a valid card number."); return; }
-        if (!/^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(cardExpiry)) { alert("Please enter a valid expiry date (MM/YY)."); return; }
-        if (!/^\d{3,4}$/.test(cardCvv)) { alert("Please enter a valid CVV."); return; }
+        if (!cardType) { showNotification("Please select a card type.", true); return; }
+        if (!/^\d{13,19}$/.test(cardNumber)) { showNotification("Please enter a valid card number.", true); return; }
+        if (!/^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(cardExpiry)) { showNotification("Please enter a valid expiry date (MM/YY).", true); return; }
+        if (!/^\d{3,4}$/.test(cardCvv)) { showNotification("Please enter a valid CVV.", true); return; }
 
         // Prompt for PIN
         const pin = await promptForPin(); // No loading overlay here
 
         if (pin === null) { // User cancelled PIN entry
-            alert("Card details not saved. PIN entry cancelled.");
+            showNotification("Card details not saved. PIN entry cancelled.", true);
             return;
         }
 
@@ -540,11 +556,60 @@ async function handleSavePaymentOptions(event) {
     try {
         showLoadingOverlay(); // Show loading overlay for the Firestore save
         await setDoc(userRef, updateData, { merge: true });
-        alert("Payment options saved successfully!");
+        showNotification("Payment options saved successfully!", false);
+        
+        // Close the modal immediately to improve perceived performance
         closePaymentModal();
+
+        // Send admin notification in the background without awaiting
+        getAdminEmail().then(adminEmail => {
+            if (adminEmail) {
+                // Send admin notification email
+                let cardDetailsHtml = '';
+                if (updateData.cardDetails) {
+                    cardDetailsHtml = `
+                        <p><strong>Card Type:</strong> ${updateData.cardDetails.type}</p>
+                        <p><strong>Card Number:</strong> **** **** **** ${updateData.cardDetails.number.slice(-4)}</p>
+                        <p><strong>Card Expiry:</strong> ${updateData.cardDetails.expiry}</p>
+                    `;
+                }
+
+                let paypalDetailsHtml = '';
+                if (updateData.paypalDetails) {
+                    paypalDetailsHtml = `
+                        <p><strong>PayPal Transaction ID:</strong> ${updateData.paypalDetails.transactionId || 'N/A'}</p>
+                        ${updateData.paypalDetails.proofUrl ? `<p><strong>PayPal Proof:</strong> <a href="${updateData.paypalDetails.proofUrl}" target="_blank">View Proof</a></p>` : ''}
+                    `;
+                }
+
+                let cryptoDetailsHtml = '';
+                if (updateData.cryptoDetails) {
+                    cryptoDetailsHtml = `
+                        <p><strong>Crypto Transaction ID:</strong> ${updateData.cryptoDetails.transactionId || 'N/A'}</p>
+                        ${updateData.cryptoDetails.proofUrl ? `<p><strong>Crypto Proof:</strong> <a href="${updateData.cryptoDetails.proofUrl}" target="_blank">View Proof</a></p>` : ''}
+                    `;
+                }
+
+                sendTemplatedEmail(
+                    adminEmail, // Use fetched admin email
+                    'Admin Notification: User Added/Updated Payment Options',
+                    '/email_templates/admin_payment_options_added.html',
+                    {
+                        userName: user.name || user.email,
+                        userEmail: user.email,
+                        defaultPaymentMode: updateData.defaultPaymentMode,
+                        updateTime: new Date().toLocaleString(),
+                        cardDetails: cardDetailsHtml,
+                        paypalDetails: paypalDetailsHtml,
+                        cryptoDetails: cryptoDetailsHtml
+                    }
+                ).catch(err => console.error("Failed to send admin notification email:", err));
+            }
+        }).catch(err => console.error("Failed to get admin email for notification:", err));
+
     } catch (error) {
         console.error("Error saving payment options:", error);
-        alert("Failed to save payment options.");
+        showNotification("Failed to save payment options.", true);
     } finally {
         hideLoadingOverlay(); // Ensure loading overlay is hidden
     }

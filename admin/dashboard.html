@@ -4,43 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="/js/firebase.js"></script>
-    <script type="module" src="../js/loading.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              body: ['"PT Sans"', 'sans-serif'],
-              headline: ['"PT Sans"', 'sans-serif'],
-              code: ['monospace'],
-            },
-            colors: {
-              background: 'hsl(43 67% 96%)',
-              foreground: 'hsl(20 14.3% 4.1%)',
-              card: 'hsl(43 67% 96%)',
-              'card-foreground': 'hsl(20 14.3% 4.1%)',
-              popover: 'hsl(43 67% 96%)',
-              'popover-foreground': 'hsl(20 14.3% 4.1%)',
-              primary: 'hsl(34 91% 75%)',
-              'primary-foreground': 'hsl(20 14.3% 4.1%)',
-              secondary: 'hsl(45 60% 88%)',
-              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
-              muted: 'hsl(45 60% 88%)',
-              'muted-foreground': 'hsl(20 14.3% 40.1%)',
-              accent: 'hsl(45 67% 91%)',
-              'accent-foreground': 'hsl(20 14.3% 4.1%)',
-              destructive: 'hsl(0 84.2% 60.2%)',
-              'destructive-foreground': 'hsl(0 0% 98%)',
-              border: 'hsl(45 40% 80%)',
-              input: 'hsl(45 40% 80%)',
-              ring: 'hsl(34 91% 75%)',
-            }
-          }
-        }
-      }
-    </script>
+    <link rel="stylesheet" href="/dist/output.css">
     <style>
 #loading-overlay {
   position: fixed;
@@ -79,7 +43,7 @@
         <p class="text-muted-foreground">Welcome! Create and manage listings from here.</p>
       </div>
 
-       <div class="mb-8 flex gap-4">
+       <div class="mb-8 flex flex-col gap-4 md:flex-row">
           <a href="dashboard.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
             Create Listing
@@ -87,6 +51,14 @@
           <a href="listings.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18"x2="3.01" y2="18"></line></svg>
             Manage Listings
+          </a>
+          <a href="orders.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            Manage Orders
+          </a>
+          <a href="email-settings.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            Email Settings
           </a>
         </div>
         
@@ -141,11 +113,13 @@
 
     <script type="module" src="../js/auth.js"></script>
     <script type="module" src="../js/layout.js"></script>
+    <script type="module" src="../js/notification.js"></script>
     <script type="module">
         import { isAdmin, authReady } from '../js/auth.js';
         import { db } from '../js/firebase.js';
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js'; // Import loading functions
+        import { showNotification } from '../js/notification.js';
 
         let selectedFiles = []; // To store files selected for upload
 
@@ -201,7 +175,7 @@
                         } catch (error) {
                             hideLoadingOverlay();
                             console.error("Error uploading images: ", error);
-                            alert('Error uploading images: ' + error.message);
+                            showNotification('Error uploading images: ' + error.message, true);
                             return; // Stop submission if image upload fails
                         }
                     }
@@ -231,13 +205,13 @@
                             status: 'available',
                             createdAt: new Date().toISOString()
                         });
-                        alert('Listing created successfully!');
+                        showNotification('Listing created successfully!', false);
                         hideLoadingOverlay();
                         window.location.href = 'listings.html';
                     } catch (error) {
                         hideLoadingOverlay();
                         console.error("Error adding document: ", error);
-                        alert('Error creating listing: ' + error.message);
+                        showNotification('Error creating listing: ' + error.message, true);
                     }
                 });
             }

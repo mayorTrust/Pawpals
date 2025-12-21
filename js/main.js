@@ -1,5 +1,11 @@
-import { getListings, getListingById } from './data.js';
+import { getListings, getListingById, getUserById } from './data.js';
 import { showLoadingOverlay, hideLoadingOverlay } from './loading.js';
+import { showNotification } from './notification.js';
+import { getLoggedInUser } from './auth.js';
+import { openPaymentModal, paymentModalHTML, setupPaymentModalListeners } from './payment.js';
+import { db } from './firebase.js';
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { sendTemplatedEmail, getAdminEmail } from './email.js';
 
 const PAGE_SIZE = 10;
 
@@ -78,7 +84,7 @@ async function renderFeaturedListings() {
             grid.appendChild(createListingCard(listing));
         });
     } catch (error) {
-        console.error("Error rendering featured listings:", error);
+        showNotification("Error rendering featured listings: " + error.message, true);
         grid.innerHTML = '<p class="col-span-full text-center text-red-500">Error loading featured listings.</p>';
     } finally {
         hideLoadingOverlay();
@@ -140,7 +146,7 @@ async function renderListings() {
             paginationControls.append(prevButton, pageIndicator, nextButton);
         }
     } catch (error) {
-        console.error("Error rendering listings:", error);
+        showNotification("Error rendering listings: " + error.message, true);
         grid.innerHTML = '<p class="col-span-full text-center text-red-500">Error loading listings.</p>';
     } finally {
         hideLoadingOverlay();
@@ -182,7 +188,7 @@ async function renderListingDetail() {
                     <div>
                         <h1 class="text-4xl font-bold">${listing.name}</h1>
                         <p class="text-xl text-muted-foreground mt-2">${listing.breed}</p>
-                        <p class="text-3xl font-bold text-primary mt-4">$${listing.price.toLocaleString()}</p>
+                        <p class="text-3xl font-bold text-primary mt-4">${listing.price.toLocaleString()}</p>
                         <div class="mt-6">
                             <h2 class="text-2xl font-semibold">Details</h2>
                             <ul class="mt-2 space-y-2 text-muted-foreground">
@@ -196,13 +202,151 @@ async function renderListingDetail() {
                             <p class="mt-2 text-lg text-muted-foreground">${listing.description}</p>
                         </div>
                         <div class="mt-8">
-                            <button class="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2">
+                            <button id="adopt-button" class="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2">
                                 Adopt ${listing.name}
                             </button>
                         </div>
                     </div>
                 </div>
             `;
+
+            // Inject payment modal HTML and setup listeners
+            const paymentModalContainer = document.getElementById('payment-modal-container');
+            if (paymentModalContainer) {
+                paymentModalContainer.innerHTML = paymentModalHTML;
+                setupPaymentModalListeners();
+            }
+
+            // Order Confirmation Modal Logic
+            const orderConfirmModal = document.getElementById('order-confirm-modal');
+            const closeOrderModalBtn = document.getElementById('close-order-modal');
+            const orderSummaryDiv = document.getElementById('order-summary');
+            const adoptButton = document.getElementById('adopt-button');
+            const addPaymentBtn = document.getElementById('add-payment-btn');
+            const makePaymentBtn = document.getElementById('make-payment-btn');
+
+            let selectedPaymentMethod = null;
+
+            if (adoptButton) {
+                adoptButton.addEventListener('click', () => {
+                    const user = getLoggedInUser();
+                    if (!user) {
+                        showNotification("Please log in to adopt a pet.", true);
+                        return;
+                    }
+
+                    // Check for existing default payment method and set it
+                    let paymentMethodDisplay = 'Not selected';
+                    if (user.defaultPaymentMode) {
+                        selectedPaymentMethod = user.defaultPaymentMode;
+                        paymentMethodDisplay = `${selectedPaymentMethod} <span class="text-green-600">(Saved)</span>`;
+                    } else {
+                        selectedPaymentMethod = null;
+                    }
+
+                    // Populate order summary
+                    orderSummaryDiv.innerHTML = `
+                        <p><strong>Pet:</strong> ${listing.name}</p>
+                        <p><strong>Breed:</strong> ${listing.breed}</p>
+                        <p><strong>Price:</strong> ${listing.price.toLocaleString()}</p>
+                        <p><strong>Your Email:</strong> ${user.email}</p>
+                        <p id="selected-payment-display"><strong>Payment Method:</strong> ${paymentMethodDisplay}</p>
+                    `;
+                    orderConfirmModal.classList.remove('hidden');
+                });
+            }
+
+            if (closeOrderModalBtn) {
+                closeOrderModalBtn.addEventListener('click', () => {
+                    orderConfirmModal.classList.add('hidden');
+                });
+            }
+
+            if (orderConfirmModal) {
+                orderConfirmModal.addEventListener('click', (e) => {
+                    if (e.target === orderConfirmModal) {
+                        orderConfirmModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (addPaymentBtn) {
+                addPaymentBtn.addEventListener('click', async () => {
+                    const initialUser = getLoggedInUser();
+                    if (!initialUser) {
+                        showNotification("Please log in first.", true);
+                        return;
+                    }
+
+                    await openPaymentModal();
+                    
+                    // After payment modal closes, refetch the user data to get updates.
+                    const updatedUser = await getUserById(initialUser.uid);
+
+                    if (updatedUser && updatedUser.defaultPaymentMode) {
+                        selectedPaymentMethod = updatedUser.defaultPaymentMode;
+                        document.getElementById('selected-payment-display').innerHTML = `<strong>Payment Method:</strong> ${selectedPaymentMethod} <span class="text-green-600">(Saved)</span>`;
+                        showNotification(`Payment method set to ${selectedPaymentMethod}.`, false);
+                    } else {
+                        document.getElementById('selected-payment-display').innerHTML = `<strong>Payment Method:</strong> Not selected`;
+                        selectedPaymentMethod = null;
+                    }
+                });
+            }
+
+            if (makePaymentBtn) {
+                makePaymentBtn.addEventListener('click', async () => {
+                    const user = getLoggedInUser();
+                    if (!user) {
+                        showNotification("Please log in to make a payment.", true);
+                        return;
+                    }
+                    if (!selectedPaymentMethod) {
+                        showNotification("Please select a payment method first.", true);
+                        return;
+                    }
+
+                    showLoadingOverlay();
+                    orderConfirmModal.classList.add('hidden'); // Hide modal immediately
+
+                    try {
+                        const orderData = {
+                            listingId: listing.id,
+                            listingName: listing.name,
+                            listingPrice: listing.price,
+                            userId: user.uid,
+                            userEmail: user.email,
+                            paymentMethod: selectedPaymentMethod,
+                            status: 'pending', // Initial status
+                            orderDate: new Date().toISOString()
+                        };
+
+                        const docRef = await addDoc(collection(db, "orders"), orderData);
+                        
+                        // Redirect immediately after order creation
+                        window.location.href = `/payment.html?orderId=${docRef.id}`;
+
+                        // Send email in the background after redirect has been initiated
+                        sendTemplatedEmail(
+                            user.email,
+                            'Your PawPals Order is Being Processed',
+                            '/email_templates/order_processing.html',
+                            {
+                                userName: user.name || user.email,
+                                orderId: docRef.id,
+                                listingName: listing.name,
+                                listingPrice: listing.price.toLocaleString(),
+                                paymentMethod: selectedPaymentMethod,
+                                orderStatus: 'pending'
+                            }
+                        ).catch(err => console.error("Error sending processing email:", err));
+
+                    } catch (error) {
+                        showNotification("Error placing order: " + error.message, true);
+                        hideLoadingOverlay(); // Only hide overlay if there's an error
+                    }
+                });
+            }
 
             if (imageUrls.length > 1) {
                 const mainImage = document.getElementById('main-listing-image');
@@ -256,7 +400,7 @@ async function renderListingDetail() {
             detailContainer.innerHTML = '<p>Listing not found.</p>';
         }
     } catch (error) {
-        console.error("Error rendering listing detail:", error);
+        showNotification("Error rendering listing detail: " + error.message, true);
         detailContainer.innerHTML = '<p class="text-red-500">Error loading listing details.</p>';
     } finally {
         hideLoadingOverlay();

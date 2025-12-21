@@ -1,4 +1,5 @@
 import { getLoggedInUser, isAdmin, logout, authReady } from './auth.js';
+import { showNotification } from './notification.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     injectHeader();

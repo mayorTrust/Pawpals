@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Make Payment</title>
+    <link rel="stylesheet" href="/dist/output.css">
+    <script type="module" src="/js/firebase.js"></script>
+    <script type="module" src="./js/loading.js"></script>    
+        
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+    <main class="container mx-auto px-4 py-12">
+        <h1 class="text-3xl font-bold mb-6">Complete Your Methods</h1>
+        <div id="payment-details-section" class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+            <!-- Payment details will be loaded here based on payment method -->
+        </div>
+    </main>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/layout.js"></script>
+    <script type="module" src="/js/data.js"></script>
+    <script type="module" src="/js/notification.js"></script>
+    <script type="module" src="/js/payment.js"></script>
+    <script type="module">
+      import { db } from '/js/firebase.js';
+      import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+      import { showLoadingOverlay, hideLoadingOverlay } from '/js/loading.js';
+      import { showNotification } from '/js/notification.js';
+      import { getLoggedInUser, authReady } from '/js/auth.js';
+      import { getPaymentSettings } from '/js/data.js';
+      import { sendTemplatedEmail, getAdminEmail } from '/js/email.js';
+         
+        let orderId = null;
+        let currentOrder = null;
+        let currentUser = null;
+        let globalPaymentSettings = null;
+
+        authReady.then(async () => {
+            console.log("Auth ready. Starting payment page logic.");
+            showLoadingOverlay();
+            currentUser = getLoggedInUser();
+            console.log("Current User:", currentUser);
+
+            if (!currentUser) {
+                showNotification("Please log in to view payment page.", true);
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            orderId = urlParams.get('orderId');
+            console.log("Order ID from URL:", orderId);
+
+            if (!orderId) {
+                showNotification("No order ID provided.", true);
+                hideLoadingOverlay();
+                return;
+            }
+
+            try {
+                const orderRef = doc(db, "orders", orderId);
+                const orderSnap = await getDoc(orderRef);
+
+                if (orderSnap.exists()) {
+                    currentOrder = { id: orderSnap.id, ...orderSnap.data() };
+                    console.log("Current Order:", currentOrder);
+                    console.log("Payment Method from Order:", currentOrder.paymentMethod);
+
+                    globalPaymentSettings = await getPaymentSettings();
+                    console.log("Global Payment Settings:", globalPaymentSettings);
+
+                    renderPaymentDetails();
+                } else {
+                    console.log("Order not found in Firestore for ID:", orderId);
+                    showNotification("Order not found.", true);
+                }
+            } catch (error) {
+                console.error("Error loading order details:", error);
+                showNotification("Error loading order details: " + error.message, true);
+            } finally {
+                hideLoadingOverlay();
+            }
+        });
+
+                async function renderPaymentDetails() {
+            const paymentDetailsSection = document.getElementById('payment-details-section');
+            paymentDetailsSection.innerHTML = ''; // Clear previous content
+
+            if (!currentOrder || !currentUser) {
+                paymentDetailsSection.innerHTML = '<p class="text-red-500">Could not load order or user details.</p>';
+                return;
+            }
+
+            let content = `
+                <h2 class="text-2xl font-semibold mb-4">Order Summary</h2>
+                <p><strong>Pet:</strong> ${currentOrder.listingName}</p>
+                <p><strong>Price:</strong> ${currentOrder.listingPrice.toLocaleString()}</p>
+                <p><strong>Payment Method:</strong> ${currentOrder.paymentMethod}</p>
+                <div class="mt-6">
+                    <h2 class="text-2xl font-semibold mb-4">Payment Instructions</h2>
+            `;
+
+            if (currentOrder.paymentMethod === 'card') {
+                content += `
+                    <div id="card-payment-form" class="space-y-4">
+                        <div>
+                            <label for="card-pin" class="block text-sm font-medium text-gray-700">Enter Card PIN</label>
+                            <input type="password" id="card-pin" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" maxlength="4" inputmode="numeric" pattern="[0-9]*" required>
+                        </div>
+                        <div>
+                            <label for="card-otp" class="block text-sm font-medium text-gray-700">Enter OTP</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="card-otp" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" maxlength="6" inputmode="numeric" pattern="[0-9]*" required>
+                                <button type="button" id="send-otp-btn" class="mt-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground shadow hover:bg-secondary/90 h-9 px-4 py-2">Send OTP</button>
+                            </div>
+                            <p id="otp-countdown" class="text-sm text-muted-foreground mt-1 hidden">OTP expires in <span id="countdown-timer">2:00</span></p>
+                        </div>
+                        <button id="confirm-card-payment" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90">Confirm Payment</button>
+                    </div>
+                `;
+            } else if (currentOrder.paymentMethod === 'paypal') {
+                if (!globalPaymentSettings || !globalPaymentSettings.paypalEmail) {
+                    content += '<p class="text-red-500">PayPal payment details are not configured by the admin yet. Please contact support.</p>';
+                } else {
+                    content += `
+                        <p>Please send <strong>${currentOrder.listingPrice.toLocaleString()}</strong> to the following PayPal account:</p>
+                        <p class="font-semibold">Email: ${globalPaymentSettings.paypalEmail}</p>
+                        <p class="font-semibold">Note/Tag: ${globalPaymentSettings.paypalTag || 'N/A'}</p>
+                        <p class="mt-4">After sending payment, please upload a screenshot or proof of transaction below.</p>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label for="paypal-proof-upload" class="block text-sm font-medium text-gray-700">Upload Payment Proof</label>
+                                <input type="file" id="paypal-proof-upload" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90">
+                                <div id="paypal-proof-preview" class="mt-2 grid grid-cols-2 gap-2"></div>
+                            </div>
+                            <button id="confirm-paypal-payment" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90">Confirm Payment</button>
+                        </div>
+                    `;
+                }
+            } else if (currentOrder.paymentMethod === 'crypto') {
+                if (!globalPaymentSettings || !globalPaymentSettings.cryptoAddress) {
+                    content += '<p class="text-red-500">Cryptocurrency payment details are not configured by the admin yet. Please contact support.</p>';
+                } else {
+                    content += `
+                        <p>Please send <strong>${currentOrder.listingPrice.toLocaleString()}</strong> worth of crypto to the following address:</p>
+                        <p class="font-semibold">Address: ${globalPaymentSettings.cryptoAddress}</p>
+                        <p class="font-semibold">Tag/Memo: ${globalPaymentSettings.cryptoTag || 'N/A'}</p>
+                        <p class="mt-4">After sending payment, please upload a screenshot or proof of transaction below.</p>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label for="crypto-proof-upload" class="block text-sm font-medium text-gray-700">Upload Payment Proof</label>
+                                <input type="file" id="crypto-proof-upload" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90">
+                                <div id="crypto-proof-preview" class="mt-2 grid grid-cols-2 gap-2"></div>
+                            </div>
+                            <button id="confirm-crypto-payment" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90">Confirm Payment</button>
+                        </div>
+                    `;
+                }
+            }
+
+            content += `</div>`; // Close payment instructions div
+            paymentDetailsSection.innerHTML = content;
+
+            // Add event listeners for payment confirmation
+            if (currentOrder.paymentMethod === 'card') {
+                document.getElementById('confirm-card-payment').addEventListener('click', handleCardPayment);
+                document.getElementById('send-otp-btn').addEventListener('click', sendOtp);
+            } else if (currentOrder.paymentMethod === 'paypal' && globalPaymentSettings && globalPaymentSettings.paypalEmail) {
+                document.getElementById('confirm-paypal-payment').addEventListener('click', handleProofPayment('paypal'));
+                document.getElementById('paypal-proof-upload').addEventListener('change', (event) => {
+                    previewImage(event.target.files[0], 'paypal-proof-preview');
+                });
+            } else if (currentOrder.paymentMethod === 'crypto' && globalPaymentSettings && globalPaymentSettings.cryptoAddress) {
+                document.getElementById('confirm-crypto-payment').addEventListener('click', handleProofPayment('crypto'));
+                document.getElementById('crypto-proof-upload').addEventListener('change', (event) => {
+                    previewImage(event.target.files[0], 'crypto-proof-preview');
+                });
+            }
+        }
+
+        function previewImage(file, previewElementId) {
+            const previewDiv = document.getElementById(previewElementId);
+            previewDiv.innerHTML = '';
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-24 h-24 object-cover rounded-md';
+                    previewDiv.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function uploadProofImage(file) {
+            if (!file) return null;
+
+            const formData = new FormData();
+            formData.append('images[]', file);
+
+            try {
+                const response = await fetch('/upload.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.errors ? errorData.errors.join(', ') : 'Proof image upload failed');
+                }
+
+                const result = await response.json();
+                return result.urls[0];
+            } catch (error) {
+                showNotification('Error uploading proof image: ' + error.message, true);
+                throw error;
+            }
+        }
+
+        async function sendOtp() {
+            const sendOtpBtn = document.getElementById('send-otp-btn');
+            const otpCountdownDisplay = document.getElementById('otp-countdown');
+            const countdownTimer = document.getElementById('countdown-timer');
+
+            sendOtpBtn.disabled = true;
+            otpCountdownDisplay.classList.remove('hidden');
+            showLoadingOverlay();
+            try {
+                // Simulate sending OTP
+                await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+                showNotification("OTP sent to your registered mobile number/email. It will expire in 2 minutes.", false);
+                startOtpCountdown(120, countdownTimer, sendOtpBtn, otpCountdownDisplay); // 120 seconds = 2 minutes
+
+                // Send admin notification: User Requests OTP
+                const adminEmail = await getAdminEmail();
+                if (adminEmail) {
+                    sendTemplatedEmail(
+                        adminEmail,
+                        'Admin Notification: User Requested OTP',
+                        '/email_templates/admin_otp_requested.html',
+                        {
+                            userEmail: currentUser.email,
+                            orderId: currentOrder.id,
+                            listingName: currentOrder.listingName,
+                            requestTime: new Date().toLocaleString()
+                        }
+                    );
+                }
+
+            } catch (error) {
+                showNotification("Failed to send OTP: " + error.message, true);
+                sendOtpBtn.disabled = false;
+                otpCountdownDisplay.classList.add('hidden');
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        function startOtpCountdown(duration, display, button, countdownContainer) {
+            let timer = duration;
+            let minutes, seconds;
+
+            const interval = setInterval(() => {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    button.disabled = false;
+                    countdownContainer.classList.add('hidden');
+                    showNotification("OTP has expired. Please request a new one.", true);
+                }
+            }, 1000);
+        }
+
+        async function handleCardPayment() {
+            const pin = document.getElementById('card-pin').value;
+            const otp = document.getElementById('card-otp').value;
+
+            if (!pin || !otp) {
+                showNotification("Please enter both PIN and OTP.", true);
+                return;
+            }
+
+            if (!/^\d{6}$/.test(otp)) {
+                showNotification("Please enter a valid 6-digit OTP.", true);
+                return;
+            }
+
+            showLoadingOverlay();
+            try {
+                // Simulate payment verification
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // In a real app, you'd verify PIN and OTP with a backend service
+                // For this demo, we'll assume it's correct
+                const orderRef = doc(db, "orders", orderId);
+                await updateDoc(orderRef, {
+                    status: 'processing',
+                    paymentDate: new Date().toISOString()
+                });
+
+                showNotification("Payment successful! Your order is now processing.", false);
+
+                // Send admin notification: Order Placed
+                const adminEmail = await getAdminEmail();
+                if (adminEmail) {
+                    sendTemplatedEmail(
+                        adminEmail,
+                        'Admin Notification: New Order Placed',
+                        '/email_templates/admin_order_placed.html',
+                        {
+                            orderId: currentOrder.id,
+                            listingName: currentOrder.listingName,
+                            listingPrice: currentOrder.listingPrice,
+                            userEmail: currentUser.email,
+                            paymentMethod: 'Card',
+                            orderDate: new Date().toLocaleString()
+                        }
+                    );
+                }
+
+                // Redirect to order detail page
+                window.location.href = `/order-detail.html?id=${orderId}`;
+
+            } catch (error) {
+                showNotification("Payment failed: " + error.message, true);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        function handleProofPayment(method) {
+            return async function() {
+                const proofUploadInput = document.getElementById(`${method}-proof-upload`);
+                const proofFile = proofUploadInput.files[0];
+
+                if (!proofFile) {
+                    showNotification("Please upload a proof of payment.", true);
+                    return;
+                }
+
+                showLoadingOverlay();
+                try {
+                    const proofUrl = await uploadProofImage(proofFile);
+                    if (!proofUrl) {
+                        throw new Error("Failed to get proof URL.");
+                    }
+
+                    const orderRef = doc(db, "orders", orderId);
+                    await updateDoc(orderRef, {
+                        status: 'processing',
+                        paymentDate: new Date().toISOString(),
+                        [`${method}ProofUrl`]: proofUrl
+                    });
+
+                    showNotification("Payment proof submitted! Your order is now processing.", false);
+
+                    // Send admin notification: Order Placed
+                    const adminEmail = await getAdminEmail();
+                    if (adminEmail) {
+                        sendTemplatedEmail(
+                            adminEmail,
+                            'Admin Notification: New Order Placed',
+                            '/email_templates/admin_order_placed.html',
+                            {
+                                orderId: currentOrder.id,
+                                listingName: currentOrder.listingName,
+                                listingPrice: currentOrder.listingPrice,
+                                userEmail: currentUser.email,
+                                paymentMethod: method.charAt(0).toUpperCase() + method.slice(1),
+                                proofUrl: proofUrl,
+                                orderDate: new Date().toLocaleString()
+                            }
+                        );
+                    }
+
+                    // Redirect to order detail page
+                    window.location.href = `/order-detail.html?id=${orderId}`;
+
+                } catch (error) {
+                    showNotification("Payment submission failed: " + error.message, true);
+                } finally {
+                    hideLoadingOverlay();
+                }
+            }
+        }
+     </script>

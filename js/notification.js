@@ -1,79 +1,97 @@
 // js/notification.js
 
-// Function to inject the notification container into the DOM
-export function initNotificationContainer() {
-    if (document.getElementById('notification-container')) {
-        return; // Container already exists
-    }
-
-    const container = document.createElement('div');
-    container.id = 'notification-container';
-    container.className = 'fixed top-4 right-4 z-[9999] space-y-3';
-    document.body.appendChild(container);
-}
-
-/**
- * Displays a custom notification modal.
- * @param {string} message The message to display.
- * @param {'success' | 'error'} type The type of notification ('success' or 'error').
- * @param {number} [duration=5000] How long the notification should be visible in milliseconds.
- */
-export function showNotification(message, type, duration = 5000) {
-    initNotificationContainer(); // Ensure container exists
-    const container = document.getElementById('notification-container');
-
+// Function to show a notification
+export function showNotification(message, isError = false, duration = 5000) {
+    // Create the notification element
     const notification = document.createElement('div');
-    notification.className = `relative flex items-center justify-between p-4 rounded-lg shadow-lg text-white transform translate-x-full transition-transform ease-out duration-300`;
+    notification.className = `fixed top-5 right-5 bg-white shadow-lg rounded-lg p-4 z-50 transform translate-x-full transition-transform duration-300 ease-out`;
+    
+    const progressBar = document.createElement('div');
+    progressBar.className = `absolute bottom-0 left-0 h-1 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+    progressBar.style.width = '100%';
 
-    let bgColor = '';
-    let iconSvg = '';
+    const messageElement = document.createElement('p');
+    messageElement.className = `text-sm ${isError ? 'text-red-700' : 'text-green-700'}`;
+    messageElement.textContent = message;
 
-    if (type === 'success') {
-        bgColor = 'bg-green-500';
-        iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
-    } else if (type === 'error') {
-        bgColor = 'bg-red-500';
-        iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
-    }
+    notification.appendChild(messageElement);
+    notification.appendChild(progressBar);
+    document.body.appendChild(notification);
 
-    notification.innerHTML = `
-        <div class="flex items-center">
-            ${iconSvg}
-            <span>${message}</span>
-        </div>
-        <div class="absolute bottom-0 left-0 h-1 ${bgColor} opacity-75" style="width: 100%;" id="notification-progress"></div>
-    `;
-    notification.classList.add(bgColor);
-
-    container.appendChild(notification);
-
-    // Trigger slide-in animation
+    // Animate in
     setTimeout(() => {
         notification.classList.remove('translate-x-full');
-    }, 10); // Small delay to ensure CSS transition applies
+    }, 100);
 
     // Animate progress bar
-    const progressBar = notification.querySelector('#notification-progress');
-    progressBar.style.transition = `width ${duration / 1000}s linear`;
-    progressBar.style.width = '0%';
+    let startTime = Date.now();
+    let animationFrameId;
 
-    // Auto-hide after duration
+    function updateProgressBar() {
+        const elapsedTime = Date.now() - startTime;
+        const progress = 1 - (elapsedTime / duration);
+        progressBar.style.width = `${progress * 100}%`;
+
+        if (progress > 0) {
+            animationFrameId = requestAnimationFrame(updateProgressBar);
+        }
+    }
+
+    animationFrameId = requestAnimationFrame(updateProgressBar);
+
+    // Animate out and remove
     setTimeout(() => {
-        notification.classList.add('translate-x-full'); // Slide out
-        notification.addEventListener('transitionend', () => {
+        notification.classList.add('translate-x-full');
+        cancelAnimationFrame(animationFrameId);
+        setTimeout(() => {
             notification.remove();
-        }, { once: true });
+        }, 300);
     }, duration);
 }
 
-export function showSuccessNotification(message, duration) {
-    showNotification(message, 'success', duration);
-}
 
-export function showErrorNotification(message, errorDetails = '', duration) {
-    let fullMessage = message;
-    if (errorDetails) {
-        fullMessage += `: ${errorDetails}`;
-    }
-    showNotification(fullMessage, 'error', duration);
+// Function to show a confirmation dialog
+export function showConfirmation(message, onConfirm, onCancel) {
+    // Create the modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50';
+
+    // Create the modal content
+    const modal = document.createElement('div');
+    modal.className = 'bg-white rounded-lg shadow-xl p-6 w-full max-w-sm';
+
+    // Message
+    const messageElement = document.createElement('p');
+    messageElement.className = 'text-lg';
+    messageElement.textContent = message;
+
+    // Buttons container
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'mt-6 flex justify-end space-x-4';
+
+    // Cancel button
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300';
+    cancelButton.textContent = 'Cancel';
+    cancelButton.onclick = () => {
+        if (onCancel) onCancel();
+        document.body.removeChild(overlay);
+    };
+
+    // Confirm button
+    const confirmButton = document.createElement('button');
+    confirmButton.className = 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700';
+    confirmButton.textContent = 'Confirm';
+    confirmButton.onclick = () => {
+        if (onConfirm) onConfirm();
+        document.body.removeChild(overlay);
+    };
+
+    buttonsContainer.appendChild(cancelButton);
+    buttonsContainer.appendChild(confirmButton);
+    modal.appendChild(messageElement);
+    modal.appendChild(buttonsContainer);
+    overlay.appendChild(modal);
+
+    document.body.appendChild(overlay);
 }

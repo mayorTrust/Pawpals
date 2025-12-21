@@ -4,43 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Admin Listings</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module" src="/js/firebase.js"></script>
-    <script type="module" src="../js/loading.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              body: ['"PT Sans"', 'sans-serif'],
-              headline: ['"PT Sans"', 'sans-serif'],
-              code: ['monospace'],
-            },
-            colors: {
-              background: 'hsl(43 67% 96%)',
-              foreground: 'hsl(20 14.3% 4.1%)',
-              card: 'hsl(43 67% 96%)',
-              'card-foreground': 'hsl(20 14.3% 4.1%)',
-              popover: 'hsl(43 67% 96%)',
-              'popover-foreground': 'hsl(20 14.3% 4.1%)',
-              primary: 'hsl(34 91% 75%)',
-              'primary-foreground': 'hsl(20 14.3% 4.1%)',
-              secondary: 'hsl(45 60% 88%)',
-              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
-              muted: 'hsl(45 60% 88%)',
-              'muted-foreground': 'hsl(20 14.3% 40.1%)',
-              accent: 'hsl(45 67% 91%)',
-              'accent-foreground': 'hsl(20 14.3% 4.1%)',
-              destructive: 'hsl(0 84.2% 60.2%)',
-              'destructive-foreground': 'hsl(0 0% 98%)',
-              border: 'hsl(45 40% 80%)',
-              input: 'hsl(45 40% 80%)',
-              ring: 'hsl(34 91% 75%)',
-            }
-          }
-        }
-      }
-    </script>
+    <link rel="stylesheet" href="/dist/output.css">
     <style>
 #loading-overlay {
   position: fixed;
@@ -102,12 +66,14 @@
     <script type="module" src="../js/auth.js"></script>
     <script type="module" src="../js/layout.js"></script>
     <script type="module" src="../js/data.js"></script>
+    <script type="module" src="../js/notification.js"></script>
     <script type="module">
         import { isAdmin, authReady } from '../js/auth.js';
         import { db } from '../js/firebase.js';
         import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { deleteListing } from '../js/data.js'; // Import deleteListing
         import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js'; // Import loading functions
+        import { showNotification } from '../js/notification.js';
 
         authReady.then(() => {
             // Basic protected route check
@@ -139,7 +105,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        $${listing.price ? listing.price.toFixed(2) : 'N/A'}
+                                        ${listing.price ? listing.price.toFixed(2) : 'N/A'}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -160,12 +126,12 @@
                                 if (confirm('Are you sure you want to delete this listing?')) {
                                     try {
                                         await deleteListing(listingIdToDelete);
-                                        alert('Listing deleted successfully!');
+                                        showNotification('Listing deleted successfully!', false);
                                         // Reload listings after deletion
                                         window.location.reload();
                                     } catch (error) {
                                         console.error("Error deleting listing: ", error);
-                                        alert('Error deleting listing: ' + error.message);
+                                        showNotification('Error deleting listing: ' + error.message, true);
                                     }
                                 }
                             });
@@ -173,6 +139,7 @@
                         hideLoadingOverlay(); // Hide loading overlay on success
                     }).catch((error) => {
                         console.error("Error getting documents: ", error);
+                        showNotification('Error loading listings: ' + error.message, true);
                         tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Error loading listings.</td></tr>';
                         hideLoadingOverlay(); // Hide loading overlay on error
                     });

@@ -1,4 +1,5 @@
 import { db } from './firebase.js';
+import { showNotification } from './notification.js';
 import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Function to fetch all listings
@@ -25,10 +26,10 @@ async function getListingById(id) {
 async function addListing(listingData) {
     try {
         const docRef = await addDoc(collection(db, "listings"), listingData);
-        console.log("Document written with ID: ", docRef.id);
+        showNotification("Listing added successfully!", false);
         return docRef.id;
     } catch (e) {
-        console.error("Error adding document: ", e);
+        showNotification("Error adding listing: " + e.message, true);
         throw e;
     }
 }
@@ -38,9 +39,9 @@ async function updateListing(id, newData) {
     try {
         const listingRef = doc(db, 'listings', id);
         await updateDoc(listingRef, newData);
-        console.log("Document updated with ID: ", id);
+        showNotification("Listing updated successfully!", false);
     } catch (e) {
-        console.error("Error updating document: ", e);
+        showNotification("Error updating listing: " + e.message, true);
         throw e;
     }
 }
@@ -49,9 +50,9 @@ async function updateListing(id, newData) {
 async function deleteListing(id) {
     try {
         await deleteDoc(doc(db, 'listings', id));
-        console.log("Document deleted with ID: ", id);
+        showNotification("Listing deleted successfully!", false);
     } catch (e) {
-        console.error("Error deleting document: ", e);
+        showNotification("Error deleting listing: " + e.message, true);
         throw e;
     }
 }
@@ -93,9 +94,9 @@ async function savePaymentSettings(settingsData) {
     try {
         const settingsRef = doc(db, 'appSettings', 'global');
         await setDoc(settingsRef, settingsData, { merge: true });
-        console.log("Payment settings saved successfully.");
+        showNotification("Payment settings saved successfully.", false);
     } catch (e) {
-        console.error("Error saving payment settings: ", e);
+        showNotification("Error saving payment settings: " + e.message, true);
         throw e;
     }
 }

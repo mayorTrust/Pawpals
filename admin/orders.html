@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Admin Orders</title>
+    <link rel="stylesheet" href="/dist/output.css">
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-4">Manage Orders</h1>
+        <div id="admin-orders-content" class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listing</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Email</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
+                            <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Actions</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Order rows will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/layout.js"></script>
+    <script type="module" src="../js/data.js"></script>
+    <script type="module" src="../js/notification.js"></script>
+    <script type="module">
+        import { isAdmin, authReady } from '../js/auth.js';
+        import { db } from '../js/firebase.js';
+        import { collection, getDocs, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js';
+        import { showNotification, showConfirmation } from '../js/notification.js';
+
+        async function loadOrders() {
+            showLoadingOverlay();
+            const ordersTableBody = document.getElementById('orders-table-body');
+            ordersTableBody.innerHTML = ''; // Clear existing rows
+
+            try {
+                const ordersQuery = query(collection(db, "orders"), orderBy("orderDate", "desc"));
+                const querySnapshot = await getDocs(ordersQuery);
+
+                if (querySnapshot.empty) {
+                    ordersTableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No orders found.</td></tr>';
+                    hideLoadingOverlay();
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const order = { id: doc.id, ...doc.data() };
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.id}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.listingName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.userEmail}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.listingPrice.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${order.paymentMethod}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${order.status.replace(/_/g, ' ')}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.orderDate).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 text-right text-sm font-medium flex items-center justify-end space-x-2">
+                            <a href="/order-detail.html?id=${order.id}" class="text-indigo-600 hover:text-indigo-900">View Details</a>
+                            <button class="text-red-600 hover:text-red-900 delete-order-btn" data-order-id="${order.id}">Delete</button>
+                        </td>
+                    `;
+                    ordersTableBody.appendChild(row);
+                });
+
+                // Attach event listeners to delete buttons
+                document.querySelectorAll('.delete-order-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const orderIdToDelete = e.target.dataset.orderId;
+                        handleDeleteOrder(orderIdToDelete);
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error loading orders: ", error);
+                showNotification("Error loading orders: " + error.message, true);
+                ordersTableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-red-500">Error loading orders.</td></tr>';
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        async function handleDeleteOrder(orderId) {
+            showConfirmation("Are you sure you want to delete this order? This action cannot be undone.", async () => {
+                showLoadingOverlay();
+                try {
+                    await deleteDoc(doc(db, "orders", orderId));
+                    showNotification("Order deleted successfully!", false);
+                    loadOrders(); // Reload orders to update the table
+                } catch (error) {
+                    console.error("Error deleting order: ", error);
+                    showNotification("Error deleting order: " + error.message, true);
+                } finally {
+                    hideLoadingOverlay();
+                }
+            });
+        }
+
+        authReady.then(() => {
+            if (!isAdmin()) {
+                window.location.href = '/login.html';
+            } else {
+                loadOrders();
+            }
+        });
+    </script>
+</body>
+</html>

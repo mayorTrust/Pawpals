@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Order Details</title>
+    <link rel="stylesheet" href="/dist/output.css">
+    <script type="module" src="/js/firebase.js"></script>
+    <script type="module" src="./js/loading.js"></script>
+    
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .step-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #ccc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    .step-line {
+        flex-grow: 1;
+        height: 2px;
+        background-color: #ccc;
+        margin: 0 0.5rem;
+    }
+    .step-text {
+        font-weight: bold;
+        color: #888;
+    }
+    .step-indicator.active .step-circle {
+        background-color: hsl(34 91% 75%); /* primary color */
+    }
+    .step-indicator.active .step-text {
+        color: hsl(34 91% 75%); /* primary color */
+    }
+    .step-indicator.completed .step-circle {
+        background-color: #28a745; /* green */
+    }
+    .step-indicator.completed .step-text {
+        color: #28a745; /* green */
+    }
+    .step-indicator.completed .step-line {
+        background-color: #28a745; /* green */
+    }
+    </style>
+</head>
+<body>
+    <main class="container mx-auto px-4 py-12">
+        <h1 class="text-3xl font-bold mb-6">Order Details</h1>
+        <div id="order-detail-content" class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+            <!-- Order details will be dynamically inserted here -->
+        </div>
+    </main>
+
+    <script type="module" src="./js/auth.js"></script>
+    <script type="module" src="./js/layout.js"></script>
+    <script type="module" src="./js/data.js"></script>
+    <script type="module" src="./js/notification.js"></script>
+    <script type="module">
+        import { db } from './js/firebase.js';
+        import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { showLoadingOverlay, hideLoadingOverlay } from './js/loading.js';
+        import { showNotification } from './js/notification.js';
+        import { getLoggedInUser, isAdmin, authReady } from './js/auth.js';
+        import { sendTemplatedEmail } from './js/email.js';
+
+        let orderId = null;
+        let currentOrder = null;
+
+        authReady.then(async () => {
+            showLoadingOverlay();
+            const user = getLoggedInUser();
+            if (!user) {
+                showNotification("Please log in to view order details.", true);
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            orderId = urlParams.get('id');
+
+            if (!orderId) {
+                showNotification("No order ID provided.", true);
+                hideLoadingOverlay();
+                return;
+            }
+
+            try {
+                const orderRef = doc(db, "orders", orderId);
+                const orderSnap = await getDoc(orderRef);
+
+                if (orderSnap.exists()) {
+                    currentOrder = { id: orderSnap.id, ...orderSnap.data() };
+
+                    // Ensure the logged-in user is either the order owner or an admin
+                    if (currentOrder.userId !== user.uid && !isAdmin()) {
+                        showNotification("You do not have permission to view this order.", true);
+                        window.location.href = '/profile.html'; // Redirect non-owners/non-admins
+                        return;
+                    }
+                    renderOrderDetails();
+                } else {
+                    showNotification("Order not found.", true);
+                }
+            } catch (error) {
+                showNotification("Error loading order details: " + error.message, true);
+            } finally {
+                hideLoadingOverlay();
+            }
+        });
+
+        async function renderOrderDetails() {
+            const detailContent = document.getElementById('order-detail-content');
+            if (!detailContent || !currentOrder) {
+                detailContent.innerHTML = '<p class="text-red-500">Could not load order details.</p>';
+                return;
+            }
+
+            const userIsAdmin = isAdmin();
+
+            let paymentDetailsHtml = '';
+            if (currentOrder.paymentDetails) {
+                const pd = currentOrder.paymentDetails;
+                if (pd.type === 'card') {
+                    paymentDetailsHtml = `
+                        <h3 class="text-xl font-semibold mt-4">Card Details</h3>
+                        <p><strong>Type:</strong> ${currentOrder.paymentMethod}</p>
+                        <p><strong>Transaction Date:</strong> ${new Date(pd.transactionDate).toLocaleString()}</p>
+                        <p><strong>Status:</strong> ${pd.status}</p>
+                    `;
+                } else if (pd.type === 'paypal' || pd.type === 'crypto') {
+                    paymentDetailsHtml = `
+                        <h3 class="text-xl font-semibold mt-4">${pd.type === 'paypal' ? 'PayPal' : 'Crypto'} Details</h3>
+                        <p><strong>Transaction ID:</strong> ${pd.transactionId || 'N/A'}</p>
+                        <p><strong>Transaction Date:</strong> ${new Date(pd.transactionDate).toLocaleString()}</p>
+                        <p><strong>Status:</strong> ${pd.status}</p>
+                        ${pd.proofUrl ? `<p><strong>Proof:</strong> <a href="${pd.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p><img src="${pd.proofUrl}" alt="Payment Proof" class="w-32 h-32 object-cover rounded-md mt-2">` : ''}
+                    `;
+                }
+            } else {
+                paymentDetailsHtml = '<p class="text-muted-foreground">No payment details recorded yet.</p>';
+            }
+
+            let adminControlsHtml = '';
+            if (userIsAdmin) {
+                adminControlsHtml = `
+                    <div class="mt-8 border-t pt-6">
+                        <h2 class="text-2xl font-semibold mb-4">Admin Actions</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="confirm-payment-btn" class="btn-admin-action bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600" data-status="payment_confirmed">Confirm Payment</button>
+                            <button id="mark-shipped-btn" class="btn-admin-action bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600" data-status="shipped">Mark Shipped</button>
+                            <button id="mark-delivered-btn" class="btn-admin-action bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600" data-status="delivered">Mark Delivered</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            detailContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Order Summary -->
+                    <div class="border rounded-lg p-6">
+                        <h2 class="text-2xl font-semibold mb-4">Order Summary</h2>
+                        <p><strong>Order ID:</strong> ${currentOrder.id}</p>
+                        <p><strong>Pet:</strong> ${currentOrder.listingName}</p>
+                        <p><strong>Price:</strong> $${currentOrder.listingPrice.toLocaleString()}</p>
+                        <p><strong>Ordered By:</strong> ${currentOrder.userEmail}</p>
+                        <p><strong>Order Date:</strong> ${new Date(currentOrder.orderDate).toLocaleString()}</p>
+                        <p><strong>Current Status:</strong> <span class="capitalize font-medium">${currentOrder.status.replace(/_/g, ' ')}</span></p>
+                    </div>
+
+                    <!-- Payment Details -->
+                    <div class="border rounded-lg p-6">
+                        <h2 class="text-2xl font-semibold mb-4">Payment Information</h2>
+                        <p><strong>Method:</strong> ${currentOrder.paymentMethod}</p>
+                        ${paymentDetailsHtml}
+                    </div>
+                </div>
+
+                <!-- Delivery Progress -->
+                <div class="mt-8 border rounded-lg p-6">
+                    <h2 class="text-2xl font-semibold mb-4">Delivery Progress</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex-1 text-center">
+                            <div class="step-indicator ${currentOrder.status === 'pending' ? 'active' : ''} ${currentOrder.status === 'payment_confirmed' || currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'completed' : ''}">
+                                <div class="step-circle">1</div>
+                                <div class="step-text">Order Placed</div>
+                            </div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <div class="step-indicator ${currentOrder.status === 'payment_confirmed' ? 'active' : ''} ${currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'completed' : ''}">
+                                <div class="step-circle">2</div>
+                                <div class="step-text">Payment Confirmed</div>
+                            </div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <div class="step-indicator ${currentOrder.status === 'shipped' ? 'active' : ''} ${currentOrder.status === 'delivered' ? 'completed' : ''}">
+                                <div class="step-circle">3</div>
+                                <div class="step-text">Shipped</div>
+                            </div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <div class="step-indicator ${currentOrder.status === 'delivered' ? 'active' : ''}">
+                                <div class="step-circle">4</div>
+                                <div class="step-text">Delivered</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${adminControlsHtml}
+            `;
+
+            if (userIsAdmin) {
+                document.querySelectorAll('.btn-admin-action').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const newStatus = e.target.dataset.status;
+                        if (confirm(`Are you sure you want to change the order status to "${newStatus.replace(/_/g, ' ')}"?`)) {
+                            showLoadingOverlay();
+                            try {
+                                const orderRef = doc(db, "orders", orderId);
+                                await updateDoc(orderRef, { status: newStatus, lastUpdated: new Date().toISOString() });
+                                showNotification(`Order status updated to "${newStatus.replace(/_/g, ' ')}".`, false);
+                                currentOrder.status = newStatus; // Update local state
+                                renderOrderDetails(); // Re-render to update UI
+
+                                // Send email based on new status
+                                if (newStatus === 'payment_confirmed') {
+                                    sendTemplatedEmail(
+                                        currentOrder.userEmail,
+                                        'Your PawPals Payment is Confirmed!',
+                                        '/email_templates/payment_confirmed.html',
+                                        {
+                                            userName: currentOrder.userEmail, // Assuming userEmail is sufficient for name
+                                            orderId: currentOrder.id,
+                                            listingName: currentOrder.listingName,
+                                            listingPrice: currentOrder.listingPrice.toLocaleString(),
+                                            paymentMethod: currentOrder.paymentMethod,
+                                            orderStatus: newStatus.replace(/_/g, ' ')
+                                        }
+                                    );
+                                } else if (newStatus === 'shipped') {
+                                    sendTemplatedEmail(
+                                        currentOrder.userEmail,
+                                        'Your PawPals Order Has Shipped!',
+                                        '/email_templates/order_shipped.html',
+                                        {
+                                            userName: currentOrder.userEmail, // Assuming userEmail is sufficient for name
+                                            orderId: currentOrder.id,
+                                            listingName: currentOrder.listingName,
+                                            listingPrice: currentOrder.listingPrice.toLocaleString(),
+                                            paymentMethod: currentOrder.paymentMethod,
+                                            orderStatus: newStatus.replace(/_/g, ' ')
+                                        }
+                                    );
+                                }
+                            } catch (error) {
+                                showNotification("Error updating order status: " + error.message, true);
+                            } finally {
+                                hideLoadingOverlay();
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    </script>
+</body>
+</html>

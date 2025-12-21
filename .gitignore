@@ -1,1 +1,2 @@
-node_modules
+node_modules\n# Local configuration files\njs/firebase-config.js\nconfig.php\n
+\n# Dependencies\n/node_modules/\n/vendor/\n\n# User Uploads\n/uploads/\n

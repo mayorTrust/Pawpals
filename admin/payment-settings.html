@@ -4,43 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Payment Settings</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/dist/output.css">
     <script type="module" src="/js/firebase.js"></script>
     <script type="module" src="../js/loading.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              body: ['"PT Sans"', 'sans-serif'],
-              headline: ['"PT Sans"', 'sans-serif'],
-              code: ['monospace'],
-            },
-            colors: {
-              background: 'hsl(43 67% 96%)',
-              foreground: 'hsl(20 14.3% 4.1%)',
-              card: 'hsl(43 67% 96%)',
-              'card-foreground': 'hsl(20 14.3% 4.1%)',
-              popover: 'hsl(43 67% 96%)',
-              'popover-foreground': 'hsl(20 14.3% 4.1%)',
-              primary: 'hsl(34 91% 75%)',
-              'primary-foreground': 'hsl(20 14.3% 4.1%)',
-              secondary: 'hsl(45 60% 88%)',
-              'secondary-foreground': 'hsl(20 14.3% 4.1%)',
-              muted: 'hsl(45 60% 88%)',
-              'muted-foreground': 'hsl(20 14.3% 40.1%)',
-              accent: 'hsl(45 67% 91%)',
-              'accent-foreground': 'hsl(20 14.3% 4.1%)',
-              destructive: 'hsl(0 84.2% 60.2%)',
-              'destructive-foreground': 'hsl(0 0% 98%)',
-              border: 'hsl(45 40% 80%)',
-              input: 'hsl(45 40% 80%)',
-              ring: 'hsl(34 91% 75%)',
-            }
-          }
-        }
-      }
-    </script>
     <style>
 #loading-overlay {
   position: fixed;
@@ -109,10 +75,12 @@
     <script type="module" src="../js/auth.js"></script>
     <script type="module" src="../js/layout.js"></script>
     <script type="module" src="../js/data.js"></script>
+    <script type="module" src="../js/notification.js"></script>
     <script type="module">
         import { isAdmin, authReady } from '../js/auth.js';
         import { getPaymentSettings, savePaymentSettings } from '../js/data.js';
         import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js';
+        import { showNotification } from '../js/notification.js';
 
         authReady.then(async () => {
             // Basic protected route check
@@ -135,7 +103,7 @@
                 }
             } catch (error) {
                 console.error("Error loading payment settings:", error);
-                alert("Error loading payment settings.");
+                showNotification("Error loading payment settings.", true);
             } finally {
                 hideLoadingOverlay();
             }
@@ -154,10 +122,10 @@
 
                 try {
                     await savePaymentSettings(newSettings);
-                    alert('Payment settings saved successfully!');
+                    showNotification('Payment settings saved successfully!', false);
                 } catch (error) {
                     console.error("Error saving payment settings:", error);
-                    alert('Error saving payment settings: ' + error.message);
+                    showNotification('Error saving payment settings: ' + error.message, true);
                 } finally {
                     hideLoadingOverlay();
                 }
