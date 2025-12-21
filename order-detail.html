@@ -175,7 +175,6 @@
                         <p><strong>Status:</strong> ${pd.status}</p>
                     `;
                 } else if (currentOrder.paymentMethod === 'cashapp') {
-                    console.log('Order-specific Cash App proofUrl:', pd.proofUrl); // Debug log
                     paymentDetailsHtml = `
                         <h3 class="text-xl font-semibold mt-4">Cash App Details (Order Specific)</h3>
                         <p><strong>Transaction ID:</strong> ${pd.transactionId || 'N/A'}</p>
@@ -183,16 +182,6 @@
                             <p><strong>Proof:</strong> <a href="${pd.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p>
                             <img src="${pd.proofUrl}" alt="Cash App Proof" class="w-32 h-32 object-cover rounded-md mt-2">
                         ` : '<p class="text-muted-foreground">No Cash App proof uploaded for this order.</p>'}
-                        <p><strong>Status:</strong> ${pd.status}</p>
-                    `;
-                } else if (currentOrder.paymentMethod === 'crypto') {
-                    paymentDetailsHtml = `
-                        <h3 class="text-xl font-semibold mt-4">Crypto Details (Order Specific)</h3>
-                        <p><strong>Transaction ID:</strong> ${pd.transactionId || 'N/A'}</p>
-                        ${pd.proofUrl ? `
-                            <p><strong>Proof:</strong> <a href="${pd.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p>
-                            <img src="${pd.proofUrl}" alt="Crypto Proof" class="w-32 h-32 object-cover rounded-md mt-2">
-                        ` : '<p class="text-muted-foreground">No Crypto proof uploaded for this order.</p>'}
                         <p><strong>Status:</strong> ${pd.status}</p>
                     `;
                 }
@@ -203,7 +192,6 @@
                                 userSavedDetails = loggedInUser.cardDetails;
                             } else if (currentOrder.paymentMethod === 'cashapp' && loggedInUser.cashappDetails) {
                                 userSavedDetails = loggedInUser.cashappDetails;
-                                console.log('User saved Cash App proofUrl:', userSavedDetails.proofUrl); // Debug log
                             } else if (currentOrder.paymentMethod === 'crypto' && loggedInUser.cryptoDetails) {
                                 userSavedDetails = loggedInUser.cryptoDetails;
                             }
