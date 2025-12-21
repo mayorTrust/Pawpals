@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 
+COPY tailwind.config.js postcss.config.js ./
 COPY src/input.css ./src/
 RUN npm run build:css
 
