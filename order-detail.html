@@ -195,39 +195,47 @@
                         <p><strong>Status:</strong> ${pd.status}</p>
                     `;
                 }
-            } else if (loggedInUser && loggedInUser.paymentMethods && loggedInUser.paymentMethods[currentOrder.paymentMethod]) {
-                // Fallback to user's saved payment method details if order-specific details are missing
-                const userPm = loggedInUser.paymentMethods[currentOrder.paymentMethod];
-                if (currentOrder.paymentMethod === 'card') {
-                    paymentDetailsHtml = `
-                        <h3 class="text-xl font-semibold mt-4">Card Details (Saved)</h3>
-                        <p><strong>Card Type:</strong> ${userPm.cardType || 'N/A'}</p>
-                        <p><strong>Last 4 Digits:</strong> ${userPm.last4 || 'N/A'}</p>
-                        <p><strong>Expiry:</strong> ${userPm.expiryMonth || 'N/A'}/${userPm.expiryYear || 'N/A'}</p>
-                    `;
-                } else if (currentOrder.paymentMethod === 'cashapp') {
-                    paymentDetailsHtml = `
-                        <h3 class="text-xl font-semibold mt-4">Cash App Details (Saved)</h3>
-                        <p><strong>Cash App ID:</strong> ${userPm.cashAppId || 'N/A'}</p>
-                        ${userPm.proofUrl ? `
-                            <p><strong>Proof:</strong> <a href="${userPm.proofUrl}" target="_blank" class="text-primary hover:underline">View Saved Proof</a></p>
-                            <img src="${userPm.proofUrl}" alt="Saved Cash App Proof" class="w-32 h-32 object-cover rounded-md mt-2">
-                        ` : '<p class="text-muted-foreground">No saved Cash App proof.</p>'}
-                    `;
-                } else if (currentOrder.paymentMethod === 'crypto') {
-                    paymentDetailsHtml = `
-                        <h3 class="text-xl font-semibold mt-4">Crypto Details (Saved)</h3>
-                        <p><strong>Wallet Address:</strong> ${userPm.walletAddress || 'N/A'}</p>
-                        ${userPm.proofUrl ? `
-                            <p><strong>Proof:</strong> <a href="${userPm.proofUrl}" target="_blank" class="text-primary hover:underline">View Saved Proof</a></p>
-                            <img src="${userPm.proofUrl}" alt="Saved Crypto Proof" class="w-32 h-32 object-cover rounded-md mt-2">
-                        ` : '<p class="text-muted-foreground">No saved Crypto proof.</p>'}
-                    `;
-                }
-            } else {
-                paymentDetailsHtml = '<p class="text-muted-foreground">No payment details recorded for this order, and no saved payment method details found.</p>';
-            }
-
+                        } else if (loggedInUser) {
+                            // Fallback to user's saved payment method details if order-specific details are missing
+                            let userSavedDetails = null;
+                            if (currentOrder.paymentMethod === 'card' && loggedInUser.cardDetails) {
+                                userSavedDetails = loggedInUser.cardDetails;
+                            } else if (currentOrder.paymentMethod === 'cashapp' && loggedInUser.cashappDetails) {
+                                userSavedDetails = loggedInUser.cashappDetails;
+                            } else if (currentOrder.paymentMethod === 'crypto' && loggedInUser.cryptoDetails) {
+                                userSavedDetails = loggedInUser.cryptoDetails;
+                            }
+            
+                            if (userSavedDetails) {
+                                if (currentOrder.paymentMethod === 'card') {
+                                    paymentDetailsHtml = `
+                                        <h3 class="text-xl font-semibold mt-4">Card Details (Saved)</h3>
+                                        <p><strong>Card Type:</strong> ${userSavedDetails.type || 'N/A'}</p>
+                                        <p><strong>Card Number:</strong> ${userSavedDetails.number ? `**** **** **** ${userSavedDetails.number.slice(-4)}` : 'N/A'}</p>
+                                        <p><strong>Expiry:</strong> ${userSavedDetails.expiry || 'N/A'}</p>
+                                    `;
+                                } else if (currentOrder.paymentMethod === 'cashapp') {
+                                    paymentDetailsHtml = `
+                                        <h3 class="text-xl font-semibold mt-4">Cash App Details (Saved)</h3>
+                                        <p><strong>Transaction ID:</strong> ${userSavedDetails.transactionId || 'N/A'}</p>
+                                        ${userSavedDetails.proofUrl ? `
+                                            <p><strong>Proof:</strong> <a href="${userSavedDetails.proofUrl}" target="_blank" class="text-primary hover:underline">View Saved Proof</a></p>
+                                            <img src="${userSavedDetails.proofUrl}" alt="Saved Cash App Proof" class="w-32 h-32 object-cover rounded-md mt-2">
+                                        ` : '<p class="text-muted-foreground">No saved Cash App proof.</p>'}
+                                    `;
+                                } else if (currentOrder.paymentMethod === 'crypto') {
+                                    paymentDetailsHtml = `
+                                        <h3 class="text-xl font-semibold mt-4">Crypto Details (Saved)</h3>
+                                        <p><strong>Transaction ID:</strong> ${userSavedDetails.transactionId || 'N/A'}</p>
+                                        ${userSavedDetails.proofUrl ? `
+                                            <p><strong>Proof:</strong> <a href="${userSavedDetails.proofUrl}" target="_blank" class="text-primary hover:underline">View Saved Proof</a></p>
+                                            <img src="${userSavedDetails.proofUrl}" alt="Saved Crypto Proof" class="w-32 h-32 object-cover rounded-md mt-2">
+                                        ` : '<p class="text-muted-foreground">No saved Crypto proof.</p>'}
+                                    `;
+                                }
+                            } else {
+                                paymentDetailsHtml = '<p class="text-muted-foreground">No payment details recorded for this order, and no saved payment method details found for this type.</p>';
+                            }
             let adminControlsHtml = '';
             if (userIsAdmin) {
                 adminControlsHtml = `
