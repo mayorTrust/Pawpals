@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawPals - Order Details</title>
     <link rel="stylesheet" href="/dist/output.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script type="module" src="/js/firebase.js"></script>
     <script type="module" src="./js/loading.js"></script>
     
@@ -156,20 +157,32 @@
             let paymentDetailsHtml = '';
             if (currentOrder.paymentDetails) {
                 const pd = currentOrder.paymentDetails;
-                if (pd.type === 'card') {
+                if (currentOrder.paymentMethod === 'card') {
                     paymentDetailsHtml = `
                         <h3 class="text-xl font-semibold mt-4">Card Details</h3>
                         <p><strong>Type:</strong> ${currentOrder.paymentMethod}</p>
                         <p><strong>Transaction Date:</strong> ${new Date(pd.transactionDate).toLocaleString()}</p>
                         <p><strong>Status:</strong> ${pd.status}</p>
                     `;
-                } else if (pd.type === 'paypal' || pd.type === 'crypto') {
+                } else if (currentOrder.paymentMethod === 'cashapp') {
                     paymentDetailsHtml = `
-                        <h3 class="text-xl font-semibold mt-4">${pd.type === 'paypal' ? 'PayPal' : 'Crypto'} Details</h3>
+                        <h3 class="text-xl font-semibold mt-4">Cash App Details</h3>
                         <p><strong>Transaction ID:</strong> ${pd.transactionId || 'N/A'}</p>
-                        <p><strong>Transaction Date:</strong> ${new Date(pd.transactionDate).toLocaleString()}</p>
+                        ${pd.proofUrl ? `
+                            <p><strong>Proof:</strong> <a href="${pd.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p>
+                            <img src="${pd.proofUrl}" alt="Cash App Proof" class="w-32 h-32 object-cover rounded-md mt-2">
+                        ` : '<p class="text-muted-foreground">No Cash App proof uploaded.</p>'}
                         <p><strong>Status:</strong> ${pd.status}</p>
-                        ${pd.proofUrl ? `<p><strong>Proof:</strong> <a href="${pd.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p><img src="${pd.proofUrl}" alt="Payment Proof" class="w-32 h-32 object-cover rounded-md mt-2">` : ''}
+                    `;
+                } else if (currentOrder.paymentMethod === 'crypto') {
+                    paymentDetailsHtml = `
+                        <h3 class="text-xl font-semibold mt-4">Crypto Details</h3>
+                        <p><strong>Transaction ID:</strong> ${pd.transactionId || 'N/A'}</p>
+                        ${pd.proofUrl ? `
+                            <p><strong>Proof:</strong> <a href="${pd.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p>
+                            <img src="${pd.proofUrl}" alt="Crypto Proof" class="w-32 h-32 object-cover rounded-md mt-2">
+                        ` : '<p class="text-muted-foreground">No Crypto proof uploaded.</p>'}
+                        <p><strong>Status:</strong> ${pd.status}</p>
                     `;
                 }
             } else {
@@ -214,35 +227,60 @@
                 <!-- Delivery Progress -->
                 <div class="mt-8 border rounded-lg p-6">
                     <h2 class="text-2xl font-semibold mb-4">Delivery Progress</h2>
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex-1 text-center">
-                            <div class="step-indicator ${currentOrder.status === 'pending' ? 'active' : ''} ${currentOrder.status === 'payment_confirmed' || currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'completed' : ''}">
-                                <div class="step-circle">1</div>
-                                <div class="step-text">Order Placed</div>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center relative space-y-8 sm:space-y-0 sm:space-x-8">
+                        <!-- Line connecting steps (for larger screens) -->
+                        <div class="absolute hidden sm:block h-1 w-full bg-gray-200 top-1/2 left-0 -translate-y-1/2"></div>
+                        <div class="absolute hidden sm:block h-1 bg-primary top-1/2 left-0 -translate-y-1/2 transition-all duration-500" id="progress-line"></div>
+
+                        <!-- Step 1: Order Placed -->
+                        <div class="flex flex-col items-center text-center relative z-10 w-full sm:w-auto">
+                            <div class="step-icon-wrapper ${currentOrder.status === 'pending' || currentOrder.status === 'payment_confirmed' || currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'} rounded-full p-3 shadow-md transition-colors duration-300">
+                                <span class="material-icons w-6 h-6">shopping_bag</span>
                             </div>
+                            <span class="mt-2 text-sm font-medium ${currentOrder.status === 'pending' || currentOrder.status === 'payment_confirmed' || currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'text-green-600' : 'text-gray-500'}">Order Placed</span>
                         </div>
-                        <div class="flex-1 text-center">
-                            <div class="step-indicator ${currentOrder.status === 'payment_confirmed' ? 'active' : ''} ${currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'completed' : ''}">
-                                <div class="step-circle">2</div>
-                                <div class="step-text">Payment Confirmed</div>
+
+                        <!-- Step 2: Payment Confirmed -->
+                        <div class="flex flex-col items-center text-center relative z-10 w-full sm:w-auto">
+                            <div class="step-icon-wrapper ${currentOrder.status === 'payment_confirmed' || currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'} rounded-full p-3 shadow-md transition-colors duration-300">
+                                <span class="material-icons w-6 h-6">credit_card</span>
                             </div>
+                            <span class="mt-2 text-sm font-medium ${currentOrder.status === 'payment_confirmed' || currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'text-green-600' : 'text-gray-500'}">Payment Confirmed</span>
                         </div>
-                        <div class="flex-1 text-center">
-                            <div class="step-indicator ${currentOrder.status === 'shipped' ? 'active' : ''} ${currentOrder.status === 'delivered' ? 'completed' : ''}">
-                                <div class="step-circle">3</div>
-                                <div class="step-text">Shipped</div>
+                        
+                        <!-- Step 3: Shipped -->
+                        <div class="flex flex-col items-center text-center relative z-10 w-full sm:w-auto">
+                            <div class="step-icon-wrapper ${currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'} rounded-full p-3 shadow-md transition-colors duration-300">
+                                <span class="material-icons w-6 h-6">local_shipping</span>
                             </div>
+                            <span class="mt-2 text-sm font-medium ${currentOrder.status === 'shipped' || currentOrder.status === 'delivered' ? 'text-green-600' : 'text-gray-500'}">Shipped</span>
                         </div>
-                        <div class="flex-1 text-center">
-                            <div class="step-indicator ${currentOrder.status === 'delivered' ? 'active' : ''}">
-                                <div class="step-circle">4</div>
-                                <div class="step-text">Delivered</div>
+
+                        <!-- Step 4: Delivered -->
+                        <div class="flex flex-col items-center text-center relative z-10 w-full sm:w-auto">
+                            <div class="step-icon-wrapper ${currentOrder.status === 'delivered' ? 'bg-green-500 text-white' : 'bg-gray-300 text-black'} rounded-full p-3 shadow-md transition-colors duration-300">
+                                <span class="material-icons w-6 h-6">done_all</span>
                             </div>
+                            <span class="mt-2 text-sm font-medium ${currentOrder.status === 'delivered' ? 'text-green-600' : 'text-gray-500'}">Delivered</span>
                         </div>
                     </div>
                 </div>
                 ${adminControlsHtml}
             `;
+
+            // Update the progress line width based on status
+            const progressLine = document.getElementById('progress-line');
+            if (progressLine) {
+                let progressWidth = '0%';
+                if (currentOrder.status === 'payment_confirmed') {
+                    progressWidth = '33%';
+                } else if (currentOrder.status === 'shipped') {
+                    progressWidth = '66%';
+                } else if (currentOrder.status === 'delivered') {
+                    progressWidth = '100%';
+                }
+                progressLine.style.width = progressWidth;
+            }
 
             if (userIsAdmin) {
                 document.querySelectorAll('.btn-admin-action').forEach(button => {

@@ -202,8 +202,8 @@ async function renderListingDetail() {
                             <p class="mt-2 text-lg text-muted-foreground">${listing.description}</p>
                         </div>
                         <div class="mt-8">
-                            <button id="adopt-button" class="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2">
-                                Adopt ${listing.name}
+                            <button id="purchase-button" class="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2">
+                                Purchase ${listing.name}
                             </button>
                         </div>
                     </div>
@@ -221,19 +221,36 @@ async function renderListingDetail() {
             const orderConfirmModal = document.getElementById('order-confirm-modal');
             const closeOrderModalBtn = document.getElementById('close-order-modal');
             const orderSummaryDiv = document.getElementById('order-summary');
-            const adoptButton = document.getElementById('adopt-button');
+            const purchaseButton = document.getElementById('purchase-button');
             const addPaymentBtn = document.getElementById('add-payment-btn');
             const makePaymentBtn = document.getElementById('make-payment-btn');
 
             let selectedPaymentMethod = null;
 
-            if (adoptButton) {
-                adoptButton.addEventListener('click', () => {
+            if (purchaseButton) {
+                purchaseButton.addEventListener('click', () => {
                     const user = getLoggedInUser();
                     if (!user) {
-                        showNotification("Please log in to adopt a pet.", true);
+                        showNotification("Please log in to purchase a pet.", true);
                         return;
                     }
+
+                    // Send email to admin
+                    getAdminEmail().then(adminEmail => {
+                        if (adminEmail) {
+                            sendTemplatedEmail(
+                                adminEmail,
+                                'User Purchase Intent',
+                                '/email_templates/admin_purchase_intent.html',
+                                {
+                                    userName: user.displayName || user.email,
+                                    userEmail: user.email,
+                                    listingName: listing.name,
+                                    listingPrice: listing.price.toLocaleString(),
+                                }
+                            );
+                        }
+                    });
 
                     // Check for existing default payment method and set it
                     let paymentMethodDisplay = 'Not selected';

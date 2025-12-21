@@ -146,22 +146,22 @@
                         <button id="confirm-card-payment" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90">Confirm Payment</button>
                     </div>
                 `;
-            } else if (currentOrder.paymentMethod === 'paypal') {
-                if (!globalPaymentSettings || !globalPaymentSettings.paypalEmail) {
-                    content += '<p class="text-red-500">PayPal payment details are not configured by the admin yet. Please contact support.</p>';
+            } else if (currentOrder.paymentMethod === 'cashapp') {
+                if (!globalPaymentSettings || !globalPaymentSettings.cashAppName) {
+                    content += '<p class="text-red-500">Cash App payment details are not configured by the admin yet. Please contact support.</p>';
                 } else {
                     content += `
-                        <p>Please send <strong>${currentOrder.listingPrice.toLocaleString()}</strong> to the following PayPal account:</p>
-                        <p class="font-semibold">Email: ${globalPaymentSettings.paypalEmail}</p>
-                        <p class="font-semibold">Note/Tag: ${globalPaymentSettings.paypalTag || 'N/A'}</p>
+                        <p>Please send <strong>${currentOrder.listingPrice.toLocaleString()}</strong> to the following Cash App account:</p>
+                        <p class="font-semibold">$Cashtag: ${globalPaymentSettings.cashAppName}</p>
+                        <p class="font-semibold">Note: ${globalPaymentSettings.cashAppTag || 'N/A'}</p>
                         <p class="mt-4">After sending payment, please upload a screenshot or proof of transaction below.</p>
                         <div class="mt-4 space-y-4">
                             <div>
-                                <label for="paypal-proof-upload" class="block text-sm font-medium text-gray-700">Upload Payment Proof</label>
-                                <input type="file" id="paypal-proof-upload" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90">
-                                <div id="paypal-proof-preview" class="mt-2 grid grid-cols-2 gap-2"></div>
+                                <label for="cashapp-proof-upload" class="block text-sm font-medium text-gray-700">Upload Payment Proof</label>
+                                <input type="file" id="cashapp-proof-upload" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90">
+                                <div id="cashapp-proof-preview" class="mt-2 grid grid-cols-2 gap-2"></div>
                             </div>
-                            <button id="confirm-paypal-payment" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90">Confirm Payment</button>
+                            <button id="confirm-cashapp-payment" class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90">Confirm Payment</button>
                         </div>
                     `;
                 }
@@ -193,10 +193,10 @@
             if (currentOrder.paymentMethod === 'card') {
                 document.getElementById('confirm-card-payment').addEventListener('click', handleCardPayment);
                 document.getElementById('send-otp-btn').addEventListener('click', sendOtp);
-            } else if (currentOrder.paymentMethod === 'paypal' && globalPaymentSettings && globalPaymentSettings.paypalEmail) {
-                document.getElementById('confirm-paypal-payment').addEventListener('click', handleProofPayment('paypal'));
-                document.getElementById('paypal-proof-upload').addEventListener('change', (event) => {
-                    previewImage(event.target.files[0], 'paypal-proof-preview');
+            } else if (currentOrder.paymentMethod === 'cashapp' && globalPaymentSettings && globalPaymentSettings.cashAppName) {
+                document.getElementById('confirm-cashapp-payment').addEventListener('click', handleProofPayment('cashapp'));
+                document.getElementById('cashapp-proof-upload').addEventListener('change', (event) => {
+                    previewImage(event.target.files[0], 'cashapp-proof-preview');
                 });
             } else if (currentOrder.paymentMethod === 'crypto' && globalPaymentSettings && globalPaymentSettings.cryptoAddress) {
                 document.getElementById('confirm-crypto-payment').addEventListener('click', handleProofPayment('crypto'));

@@ -113,28 +113,31 @@
 
     <script type="module" src="../js/auth.js"></script>
     <script type="module" src="../js/layout.js"></script>
+    <script type="module" src="../js/data.js"></script>
     <script type="module" src="../js/notification.js"></script>
     <script type="module">
         import { isAdmin, authReady } from '../js/auth.js';
+        import { db } from '../js/firebase.js';
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js';
         import { showNotification } from '../js/notification.js';
+
+        const SETTINGS_DOC_ID = 'emailSettings'; // Document ID for email settings in Firestore
 
         async function loadEmailSettings() {
             showLoadingOverlay();
             try {
-                const response = await fetch('get-email-settings.php');
-                const data = await response.json();
+                const settingsRef = doc(db, 'appSettings', SETTINGS_DOC_ID);
+                const settingsSnap = await getDoc(settingsRef);
 
-                if (data.success && data.settings) {
-                    const settings = data.settings;
-                    document.getElementById('smtp-host').value = settings.smtp_host || '';
-                    document.getElementById('smtp-port').value = settings.smtp_port || '';
-                    document.getElementById('smtp-encryption').value = settings.smtp_secure || 'tls';
-                    document.getElementById('smtp-username').value = settings.smtp_username || '';
-                    document.getElementById('sender-email').value = settings.from_email || '';
-                    // Do NOT load the password
-                } else {
-                    showNotification(data.message || 'Could not load email settings.', true);
+                if (settingsSnap.exists()) {
+                    const settings = settingsSnap.data();
+                    document.getElementById('smtp-host').value = settings.smtpHost || '';
+                    document.getElementById('smtp-port').value = settings.smtpPort || '';
+                    document.getElementById('smtp-encryption').value = settings.smtpEncryption || 'tls';
+                    document.getElementById('smtp-username').value = settings.smtpUsername || '';
+                    document.getElementById('smtp-password').value = settings.smtpPassword || '';
+                    document.getElementById('sender-email').value = settings.senderEmail || '';
                 }
             } catch (error) {
                 showNotification('Error loading email settings: ' + error.message, true);
@@ -148,30 +151,28 @@
                 window.location.href = '/login.html';
                 return;
             }
-            await loadEmailSettings();
+            loadEmailSettings();
 
             document.getElementById('email-settings-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 showLoadingOverlay();
 
-                const formData = new FormData(e.target);
+                const settingsData = {
+                    smtpHost: document.getElementById('smtp-host').value,
+                    smtpPort: parseInt(document.getElementById('smtp-port').value),
+                    smtpEncryption: document.getElementById('smtp-encryption').value,
+                    smtpUsername: document.getElementById('smtp-username').value,
+                    smtpPassword: document.getElementById('smtp-password').value,
+                    senderEmail: document.getElementById('sender-email').value,
+                    lastUpdated: new Date().toISOString()
+                };
 
                 try {
-                    const response = await fetch('save-email-settings.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const result = await response.json();
-
-                    if (result.success) {
-                        showNotification('Email settings saved successfully!', false);
-                        // Clear password field after submission for security
-                        document.getElementById('smtp-password').value = '';
-                    } else {
-                        showNotification(result.message || 'An error occurred.', true);
-                    }
+                    const settingsRef = doc(db, 'appSettings', SETTINGS_DOC_ID);
+                    await setDoc(settingsRef, settingsData, { merge: true });
+                    showNotification('Email settings saved successfully!', false);
                 } catch (error) {
-                    showNotification('Error saving settings: ' + error.message, true);
+                    showNotification('Error saving email settings: ' + error.message, true);
                 } finally {
                     hideLoadingOverlay();
                 }

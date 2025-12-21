@@ -41,16 +41,16 @@
         <h1 class="text-3xl font-bold mb-4">Payment Settings</h1>
         <div class="border rounded-lg p-6">
             <form id="payment-settings-form" class="space-y-6">
-                <!-- PayPal Settings -->
+                <!-- Cash App Settings -->
                 <div>
-                    <h2 class="text-2xl font-semibold mb-3">PayPal Settings</h2>
+                    <h2 class="text-2xl font-semibold mb-3">Cash App Settings</h2>
                     <div>
-                        <label for="paypal-email" class="block text-sm font-medium text-gray-700">PayPal Email</label>
-                        <input type="email" id="paypal-email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="your-paypal-email@example.com">
+                        <label for="cashapp-name" class="block text-sm font-medium text-gray-700">Cash App $Cashtag</label>
+                        <input type="text" id="cashapp-name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="$YourCashtag">
                     </div>
                     <div class="mt-4">
-                        <label for="paypal-tag" class="block text-sm font-medium text-gray-700">PayPal Tag/Note (Optional)</label>
-                        <input type="text" id="paypal-tag" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="e.g., PawPals Payment">
+                        <label for="cashapp-tag" class="block text-sm font-medium text-gray-700">Cash App Note (Optional)</label>
+                        <input type="text" id="cashapp-tag" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="e.g., PawPals Payment">
                     </div>
                 </div>
 
@@ -96,8 +96,8 @@
             try {
                 const settings = await getPaymentSettings();
                 if (settings) {
-                    document.getElementById('paypal-email').value = settings.paypalEmail || '';
-                    document.getElementById('paypal-tag').value = settings.paypalTag || '';
+                    document.getElementById('cashapp-name').value = settings.cashAppName || '';
+                    document.getElementById('cashapp-tag').value = settings.cashAppTag || '';
                     document.getElementById('crypto-address').value = settings.cryptoAddress || '';
                     document.getElementById('crypto-tag').value = settings.cryptoTag || '';
                 }
@@ -113,8 +113,8 @@
                 showLoadingOverlay();
 
                 const newSettings = {
-                    paypalEmail: document.getElementById('paypal-email').value,
-                    paypalTag: document.getElementById('paypal-tag').value,
+                    cashAppName: document.getElementById('cashapp-name').value,
+                    cashAppTag: document.getElementById('cashapp-tag').value,
                     cryptoAddress: document.getElementById('crypto-address').value,
                     cryptoTag: document.getElementById('crypto-tag').value,
                     lastUpdated: new Date().toISOString()

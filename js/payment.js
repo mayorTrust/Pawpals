@@ -23,8 +23,8 @@ export const paymentModalHTML = `
                         <span class="ml-2">Card</span>
                     </label>
                     <label class="inline-flex items-center">
-                        <input type="radio" name="defaultPaymentMode" value="paypal" class="form-radio text-primary">
-                        <span class="ml-2">PayPal</span>
+                        <input type="radio" name="defaultPaymentMode" value="cashapp" class="form-radio text-primary">
+                        <span class="ml-2">Cash App</span>
                     </label>
                     <label class="inline-flex items-center">
                         <input type="radio" name="defaultPaymentMode" value="crypto" class="form-radio text-primary">
@@ -93,22 +93,22 @@ export const paymentModalHTML = `
                         </div>
                     </div>
 
-                    <!-- PayPal Details Section -->
-                    <div id="paypal-details-section" class="space-y-4 hidden">
-                        <h4 class="text-lg font-medium mb-3">PayPal Details</h4>
-                        <p class="text-sm text-muted-foreground">Send payment to: <strong id="paypal-email-display"></strong></p>
-                        <p class="text-sm text-muted-foreground">Tag/Note: <strong id="paypal-tag-display"></strong></p>
+                    <!-- Cash App Details Section -->
+                    <div id="cashapp-details-section" class="space-y-4 hidden">
+                        <h4 class="text-lg font-medium mb-3">Cash App Details</h4>
+                        <p class="text-sm text-muted-foreground">Send payment to: <strong id="cashapp-name-display"></strong></p>
+                        <p class="text-sm text-muted-foreground">Note: <strong id="cashapp-tag-display"></strong></p>
                         <div>
-                            <label for="paypal-transaction-id" class="block text-sm font-medium text-gray-700">Transaction ID</label>
-                            <input type="text" id="paypal-transaction-id" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="PayPal Transaction ID">
+                            <label for="cashapp-transaction-id" class="block text-sm font-medium text-gray-700">Transaction ID</label>
+                            <input type="text" id="cashapp-transaction-id" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Cash App Transaction ID">
                         </div>
                         <div>
-                            <label for="paypal-proof-upload" class="block text-sm font-medium text-gray-700">Upload Payment Proof</label>
-                            <input type="file" id="paypal-proof-upload" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90">
-                            <div id="paypal-proof-preview" class="mt-2 grid grid-cols-2 gap-2"></div>
-                            <div id="saved-paypal-proof" class="mt-2 p-3 border rounded-md bg-gray-50 hidden">
+                            <label for="cashapp-proof-upload" class="block text-sm font-medium text-gray-700">Upload Payment Proof</label>
+                            <input type="file" id="cashapp-proof-upload" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90">
+                            <div id="cashapp-proof-preview" class="mt-2 grid grid-cols-2 gap-2"></div>
+                            <div id="saved-cashapp-proof" class="mt-2 p-3 border rounded-md bg-gray-50 hidden">
                                 <h5 class="font-medium">Saved Proof:</h5>
-                                <img id="display-paypal-proof" src="" alt="PayPal Proof" class="w-24 h-24 object-cover rounded-md">
+                                <img id="display-cashapp-proof" src="" alt="Cash App Proof" class="w-24 h-24 object-cover rounded-md">
                             </div>
                         </div>
                     </div>
@@ -161,7 +161,7 @@ export const paymentModalHTML = `
 </div>
 `;
 
-let selectedPayPalProofFile = null;
+let selectedCashAppProofFile = null;
 let selectedCryptoProofFile = null;
 let resolvePinPromise = null; // To resolve the PIN entry promise
 let modalClosePromiseResolver = null; // To resolve the modal close promise
@@ -181,11 +181,11 @@ export function setupPaymentModalListeners() {
 
     const defaultPaymentModeRadios = document.querySelectorAll('input[name="defaultPaymentMode"]');
     const cardDetailsSection = document.getElementById('card-details-section');
-    const paypalDetailsSection = document.getElementById('paypal-details-section');
+    const cashappDetailsSection = document.getElementById('cashapp-details-section');
     const cryptoDetailsSection = document.getElementById('crypto-details-section');
 
-    const paypalProofUpload = document.getElementById('paypal-proof-upload');
-    const paypalProofPreview = document.getElementById('paypal-proof-preview');
+    const cashappProofUpload = document.getElementById('cashapp-proof-upload');
+    const cashappProofPreview = document.getElementById('cashapp-proof-preview');
     const cryptoProofUpload = document.getElementById('crypto-proof-upload');
     const cryptoProofPreview = document.getElementById('crypto-proof-preview');
 
@@ -211,33 +211,33 @@ export function setupPaymentModalListeners() {
         radio.addEventListener('change', (event) => {
             const mode = event.target.value;
             cardDetailsSection.classList.add('hidden');
-            paypalDetailsSection.classList.add('hidden');
+            cashappDetailsSection.classList.add('hidden');
             cryptoDetailsSection.classList.add('hidden');
 
             if (mode === 'card') {
                 cardDetailsSection.classList.remove('hidden');
-            } else if (mode === 'paypal') {
-                paypalDetailsSection.classList.remove('hidden');
+            } else if (mode === 'cashapp') {
+                cashappDetailsSection.classList.remove('hidden');
             } else if (mode === 'crypto') {
                 cryptoDetailsSection.classList.remove('hidden');
             }
         });
     });
 
-    // Handle PayPal proof upload preview
-    if (paypalProofUpload) {
-        paypalProofUpload.addEventListener('change', (event) => {
-            paypalProofPreview.innerHTML = '';
-            selectedPayPalProofFile = event.target.files[0];
-            if (selectedPayPalProofFile) {
+    // Handle Cash App proof upload preview
+    if (cashappProofUpload) {
+        cashappProofUpload.addEventListener('change', (event) => {
+            cashappProofPreview.innerHTML = '';
+            selectedCashAppProofFile = event.target.files[0];
+            if (selectedCashAppProofFile) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.className = 'w-24 h-24 object-cover rounded-md';
-                    paypalProofPreview.appendChild(img);
+                    cashappProofPreview.appendChild(img);
                 };
-                reader.readAsDataURL(selectedPayPalProofFile);
+                reader.readAsDataURL(selectedCashAppProofFile);
             }
         });
     }
@@ -412,24 +412,24 @@ async function loadPaymentDetails() {
             displayCardNumber.textContent = '';
         }
 
-        // Load PayPal Details
-        const savedPayPalProofDiv = document.getElementById('saved-paypal-proof');
-        const displayPayPalProof = document.getElementById('display-paypal-proof');
-        if (userData.paypalDetails) {
-            document.getElementById('paypal-transaction-id').value = userData.paypalDetails.transactionId || '';
-            if (userData.paypalDetails.proofUrl) {
-                displayPayPalProof.src = userData.paypalDetails.proofUrl;
-                savedPayPalProofDiv.classList.remove('hidden');
+        // Load Cash App Details
+        const savedCashAppProofDiv = document.getElementById('saved-cashapp-proof');
+        const displayCashAppProof = document.getElementById('display-cashapp-proof');
+        if (userData.cashappDetails) {
+            document.getElementById('cashapp-transaction-id').value = userData.cashappDetails.transactionId || '';
+            if (userData.cashappDetails.proofUrl) {
+                displayCashAppProof.src = userData.cashappDetails.proofUrl;
+                savedCashAppProofDiv.classList.remove('hidden');
             } else {
-                savedPayPalProofDiv.classList.add('hidden');
+                savedCashAppProofDiv.classList.add('hidden');
             }
         } else {
-            document.getElementById('paypal-transaction-id').value = '';
-            savedPayPalProofDiv.classList.add('hidden');
+            document.getElementById('cashapp-transaction-id').value = '';
+            savedCashAppProofDiv.classList.add('hidden');
         }
-        // Set dynamic PayPal details
-        document.getElementById('paypal-email-display').textContent = globalSettings?.paypalEmail || 'N/A';
-        document.getElementById('paypal-tag-display').textContent = globalSettings?.paypalTag || 'N/A';
+        // Set dynamic Cash App details
+        document.getElementById('cashapp-name-display').textContent = globalSettings?.cashAppName || 'N/A';
+        document.getElementById('cashapp-tag-display').textContent = globalSettings?.cashAppTag || 'N/A';
 
 
         // Load Crypto Details
@@ -509,12 +509,12 @@ async function handleSavePaymentOptions(event) {
         updateData.cardDetails = null; // Clear card details if not default
     }
 
-    // PayPal Details
-    if (defaultPaymentMode === 'paypal') {
-        let paypalProofUrl = null;
+    // Cash App Details
+    if (defaultPaymentMode === 'cashapp') {
+        let cashappProofUrl = null;
         try {
-            showLoadingOverlay(); // Show loading overlay for PayPal proof upload
-            paypalProofUrl = await uploadProofImage(selectedPayPalProofFile);
+            showLoadingOverlay(); // Show loading overlay for cashapp proof upload
+            cashappProofUrl = await uploadProofImage(selectedCashAppProofFile);
         } catch (error) { 
             hideLoadingOverlay(); // Hide on error
             return; 
@@ -522,13 +522,13 @@ async function handleSavePaymentOptions(event) {
             hideLoadingOverlay(); // Ensure it's hidden after upload attempt
         }
 
-        updateData.paypalDetails = {
-            transactionId: document.getElementById('paypal-transaction-id').value,
-            proofUrl: paypalProofUrl || (user.paypalDetails ? user.paypalDetails.proofUrl : null), // Retain old if no new upload
+        updateData.cashappDetails = {
+            transactionId: document.getElementById('cashapp-transaction-id').value,
+            proofUrl: cashappProofUrl || (user.cashappDetails ? user.cashappDetails.proofUrl : null), // Retain old if no new upload
             lastUpdated: new Date().toISOString()
         };
     } else {
-        updateData.paypalDetails = null; // Clear PayPal details if not default
+        updateData.cashappDetails = null; // Clear cashapp details if not default
     }
 
     // Crypto Details
@@ -574,11 +574,11 @@ async function handleSavePaymentOptions(event) {
                     `;
                 }
 
-                let paypalDetailsHtml = '';
-                if (updateData.paypalDetails) {
-                    paypalDetailsHtml = `
-                        <p><strong>PayPal Transaction ID:</strong> ${updateData.paypalDetails.transactionId || 'N/A'}</p>
-                        ${updateData.paypalDetails.proofUrl ? `<p><strong>PayPal Proof:</strong> <a href="${updateData.paypalDetails.proofUrl}" target="_blank">View Proof</a></p>` : ''}
+                let cashappDetailsHtml = '';
+                if (updateData.cashappDetails) {
+                    cashappDetailsHtml = `
+                        <p><strong>Cash App Transaction ID:</strong> ${updateData.cashappDetails.transactionId || 'N/A'}</p>
+                        ${updateData.cashappDetails.proofUrl ? `<p><strong>Cash App Proof:</strong> <a href="${updateData.cashappDetails.proofUrl}" target="_blank">View Proof</a></p>` : ''}
                     `;
                 }
 
@@ -600,7 +600,7 @@ async function handleSavePaymentOptions(event) {
                         defaultPaymentMode: updateData.defaultPaymentMode,
                         updateTime: new Date().toLocaleString(),
                         cardDetails: cardDetailsHtml,
-                        paypalDetails: paypalDetailsHtml,
+                        cashappDetails: cashappDetailsHtml,
                         cryptoDetails: cryptoDetailsHtml
                     }
                 ).catch(err => console.error("Failed to send admin notification email:", err));

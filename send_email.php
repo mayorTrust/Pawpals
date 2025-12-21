@@ -4,53 +4,48 @@ header('Content-Type: application/json');
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require 'vendor/autoload.php';
-
-// Load email configuration securely from the server
-$config = require 'config.php';
+require 'vendor/autoload.php'; // Adjust path as necessary
 
 $response = ['success' => false, 'message' => 'An unknown error occurred.'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize and retrieve POST data
-    $to = filter_var($_POST['to'] ?? '', FILTER_SANITIZE_EMAIL);
-    $subject = htmlspecialchars($_POST['subject'] ?? '');
-    $body = $_POST['body'] ?? ''; // Assuming body is HTML, sanitize as needed before use
-    $altBody = strip_tags($body);
+    $to = $_POST['to'] ?? '';
+    $subject = $_POST['subject'] ?? '';
+    $body = $_POST['body'] ?? '';
+    $altBody = $_POST['altBody'] ?? strip_tags($body); // Plain-text body for non-HTML mail clients
 
     if (empty($to) || empty($subject) || empty($body)) {
-        http_response_code(400);
         $response['message'] = 'Missing required email parameters (to, subject, body).';
         echo json_encode($response);
         exit;
     }
-    
-    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
-        http_response_code(400);
-        $response['message'] = 'Invalid "to" email address.';
-        echo json_encode($response);
-        exit;
-    }
 
-    $mail = new PHPMailer(true); // Enable exceptions
+    $mail = new PHPMailer(true); // Passing `true` enables exceptions
 
     try {
-        // Check if server settings are complete in config.php
-        if (empty($config['smtp_host']) || empty($config['smtp_username']) || empty($config['smtp_password']) || empty($config['from_email'])) {
+        // Server settings
+        // These settings are now passed in the POST request (from client-side)
+        $smtpHost = $_POST['smtpHost'] ?? '';
+        $smtpPort = $_POST['smtpPort'] ?? 587;
+        $smtpEncryption = $_POST['smtpEncryption'] ?? 'tls';
+        $smtpUsername = $_POST['smtpUsername'] ?? '';
+        $smtpPassword = $_POST['smtpPassword'] ?? '';
+        $senderEmail = $_POST['senderEmail'] ?? '';
+
+        if (empty($smtpHost) || empty($smtpUsername) || empty($smtpPassword) || empty($senderEmail)) {
             throw new Exception('SMTP settings are incomplete. Please configure them in the admin panel.');
         }
 
-        // Server settings from config.php
         $mail->isSMTP();
-        $mail->Host       = $config['smtp_host'];
+        $mail->Host       = $smtpHost;
         $mail->SMTPAuth   = true;
-        $mail->Username   = $config['smtp_username'];
-        $mail->Password   = $config['smtp_password'];
-        $mail->SMTPSecure = $config['smtp_secure'];
-        $mail->Port       = $config['smtp_port'];
+        $mail->Username   = $smtpUsername;
+        $mail->Password   = $smtpPassword;
+        $mail->SMTPSecure = $smtpEncryption === 'none' ? PHPMailer::ENCRYPTION_STARTTLS : $smtpEncryption;
+        $mail->Port       = $smtpPort;
 
         // Recipients
-        $mail->setFrom($config['from_email'], $config['from_name'] ?? 'PawPals');
+        $mail->setFrom($senderEmail, 'PawPals');
         $mail->addAddress($to);
 
         // Content
@@ -63,11 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $response['success'] = true;
         $response['message'] = 'Email sent successfully!';
     } catch (Exception $e) {
-        http_response_code(500);
         $response['message'] = "Email could not be sent. Mailer Error: {$mail->ErrorInfo}";
     }
 } else {
-    http_response_code(405); // Method Not Allowed
     $response['message'] = 'Invalid request method.';
 }
 
