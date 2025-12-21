@@ -5,11 +5,14 @@ WORKDIR /var/www/html
 
 # Install system dependencies for PHP extensions
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    autoconf \
     libpng-dev \
     libjpeg-dev \
     libwebp-dev \
     libfreetype6-dev \
-    zip \
+    libzip-dev \
+    libxml2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install commonly required PHP extensions
