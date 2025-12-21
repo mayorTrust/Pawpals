@@ -7,7 +7,7 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 COPY src/input.css ./src/
-RUN npm run build-css
+RUN npm run build:css
 
 # Stage 2: Setup PHP application with Apache
 FROM php:8.2-apache
