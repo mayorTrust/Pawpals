@@ -188,7 +188,7 @@ async function renderListingDetail() {
                     <div>
                         <h1 class="text-4xl font-bold">${listing.name}</h1>
                         <p class="text-xl text-muted-foreground mt-2">${listing.breed}</p>
-                        <p class="text-3xl font-bold text-primary mt-4">${listing.price.toLocaleString()}</p>
+                        <p class="text-3xl font-bold text-primary mt-4">$${listing.price.toLocaleString()}</p>
                         <div class="mt-6">
                             <h2 class="text-2xl font-semibold">Details</h2>
                             <ul class="mt-2 space-y-2 text-muted-foreground">
