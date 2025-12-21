@@ -175,6 +175,7 @@
                         <p><strong>Status:</strong> ${pd.status}</p>
                     `;
                 } else if (currentOrder.paymentMethod === 'cashapp') {
+                    console.log('Order-specific Cash App proofUrl:', pd.proofUrl); // Debug log
                     paymentDetailsHtml = `
                         <h3 class="text-xl font-semibold mt-4">Cash App Details (Order Specific)</h3>
                         <p><strong>Transaction ID:</strong> ${pd.transactionId || 'N/A'}</p>
@@ -202,6 +203,7 @@
                                 userSavedDetails = loggedInUser.cardDetails;
                             } else if (currentOrder.paymentMethod === 'cashapp' && loggedInUser.cashappDetails) {
                                 userSavedDetails = loggedInUser.cashappDetails;
+                                console.log('User saved Cash App proofUrl:', userSavedDetails.proofUrl); // Debug log
                             } else if (currentOrder.paymentMethod === 'crypto' && loggedInUser.cryptoDetails) {
                                 userSavedDetails = loggedInUser.cryptoDetails;
                             }
