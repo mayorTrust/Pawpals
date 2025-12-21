@@ -3,11 +3,18 @@ FROM php:8.2-apache
 
 WORKDIR /var/www/html
 
-# Install system dependencies for PHP extensions (if any are needed beyond standard)
-# Example: If your PHP app uses GD library for image manipulation, uncomment:
-# RUN apk add --no-cache libpng libjpeg-turbo libwebp freetype \
-#     libpng-dev libjpeg-turbo-dev libwebp-dev freetype-dev
-# RUN docker-php-ext-install -j$(nproc) gd
+# Install system dependencies for PHP extensions
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libwebp-dev \
+    libfreetype6-dev \
+    zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install commonly required PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) gd mbstring xml zip
 
 # Install Composer
 COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
