@@ -16,10 +16,18 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install commonly required PHP extensions
-# Configure and install GD separately due to its dependencies
+# Install GD
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-install -j$(nproc) mbstring xml zip
+    && docker-php-ext-install gd
+
+# Install mbstring
+RUN docker-php-ext-install mbstring
+
+# Install xml
+RUN docker-php-ext-install xml
+
+# Install zip
+RUN docker-php-ext-install zip
 
 # Install Composer
 COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
