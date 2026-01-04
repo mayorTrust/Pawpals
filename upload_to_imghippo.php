@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-$apiKey = '4356bbc7f94bc23a178a20e485dd7203';
+$apiKey = '2bb9ca8b1f88968215dd54a76a89b4e5';
 $apiUrl = 'https://api.imghippo.com/v1/upload';
 
 $response = ['success' => false, 'urls' => [], 'errors' => []];
