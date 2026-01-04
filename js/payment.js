@@ -318,10 +318,10 @@ async function uploadProofImage(file) {
     if (!file) return null;
 
     const formData = new FormData();
-    formData.append('images[]', file); // Use 'images[]' as expected by upload.php
-
-    try {
-        const response = await fetch('/upload.php', {
+                    formData.append('images[]', file); // Use 'images[]' as expected by upload_to_imghippo.php
+    
+                    try {
+                        const response = await fetch('/upload_to_imghippo.php', {
             method: 'POST',
             body: formData
         });
