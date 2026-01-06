@@ -38,19 +38,5 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        # server-dir: /path/to/your/server/dir/ # Optional: specify the directory on the server
+        server-dir: /htdocs/ # Optional: specify the directory on the server
         # local-dir: ./ # Optional: specify the local directory to upload from
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          **/vendor/**
-          .github/**
-          src/**
-          *.md
-          postcss.config.js
-          tailwind.config.js
-          package.json
-          package-lock.json
-          composer.json
-          composer.lock
