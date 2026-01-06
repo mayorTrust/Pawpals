@@ -1,0 +1,56 @@
+name: Deploy to FTP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1' # You can change this to your required PHP version
+
+    - name: Install PHP dependencies
+      run: composer install --no-dev --prefer-dist
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18' # You can change this to your required Node.js version
+
+    - name: Install Node.js dependencies
+      run: npm install
+
+    - name: Build CSS
+      run: npm run build:css
+
+    - name: FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@4.3.3
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        # server-dir: /path/to/your/server/dir/ # Optional: specify the directory on the server
+        # local-dir: ./ # Optional: specify the local directory to upload from
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/vendor/**
+          .github/**
+          src/**
+          *.md
+          postcss.config.js
+          tailwind.config.js
+          package.json
+          package-lock.json
+          composer.json
+          composer.lock
