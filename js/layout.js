@@ -18,12 +18,7 @@ function injectHeader() {
       <div class="container mx-auto flex h-16 items-center space-x-4 px-4 sm:justify-between sm:space-x-0">
         <div class="flex gap-6 md:gap-10">
           <a href="/index.html" class="flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-primary">
-                <path d="M14.5 7.5a2.5 2.5 0 0 1 5 0V8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V7.5Z"></path>
-                <path d="M9.5 7.5a2.5 2.5 0 0 0-5 0V8a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V7.5Z"></path>
-                <path d="M12 15a2.5 2.5 0 0 0-2.5-2.5h-1a2.5 2.5 0 0 0 0 5h1A2.5 2.5 0 0 0 12 15Z"></path>
-                <path d="M22 12c0 5.5-4.5 10-10 10S2 17.5 2 12 6.5 2 12 2a9.7 9.7 0 0 1 5.4.3"></path>
-            </svg>
+            <img src="/pawpals.png" alt="PawPals Logo" class="h-8 w-8">
             <span class="inline-block font-bold text-lg font-headline">PawPals</span>
           </a>
           <nav class="flex gap-6"> <!-- Changed from hidden md:flex to flex -->
@@ -78,9 +73,7 @@ function injectFooter() {
     <footer class="border-t">
       <div class="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 md:h-24 md:flex-row md:py-0">
         <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6 text-primary">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 13.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-7 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.5-7c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
-          </svg>
+          <img src="/pawpals.png" alt="PawPals Logo" class="h-6 w-6">
           <p class="text-center text-sm leading-loose md:text-left">
             Built by your friendly neighborhood AI.
           </p>
