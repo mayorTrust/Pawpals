@@ -165,6 +165,8 @@ async function renderListingDetail() {
         const listing = await getListingById(listingId);
 
         if (listing) {
+            updateSEOTags(listing);
+            addStructuredData(listing);
             const imageUrls = listing.imageUrls && listing.imageUrls.length > 0 ? listing.imageUrls : ['https://via.placeholder.com/600x400'];
             let currentImageIndex = 0;
 
@@ -422,4 +424,59 @@ async function renderListingDetail() {
     } finally {
         hideLoadingOverlay();
     }
+}
+
+function updateSEOTags(listing) {
+    document.title = `PawPals - Adopt ${listing.name}, the ${listing.breed}`;
+    document.querySelector('meta[name="description"]').setAttribute('content', `Meet ${listing.name}, a charming ${listing.breed} looking for a loving home. Learn more about their personality, health, and how to adopt them on PawPals.`);
+    document.querySelector('meta[name="keywords"]').setAttribute('content', `${listing.breed}, ${listing.name}, dog adoption, buy puppy, adopt ${listing.breed}`);
+    
+    const pageUrl = window.location.href;
+    const imageUrl = listing.imageUrls && listing.imageUrls.length > 0 ? new URL(listing.imageUrls[0], window.location.origin).href : new URL('/pawpals.png', window.location.origin).href;
+
+    document.querySelector('meta[property="og:title"]').setAttribute('content', document.title);
+    document.querySelector('meta[property="og:description"]').setAttribute('content', document.querySelector('meta[name="description"]').getAttribute('content'));
+    document.querySelector('meta[property="og:url"]').setAttribute('content', pageUrl);
+    document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
+
+    document.querySelector('meta[property="twitter:title"]').setAttribute('content', document.title);
+    document.querySelector('meta[property="twitter:description"]').setAttribute('content', document.querySelector('meta[name="description"]').getAttribute('content'));
+    document.querySelector('meta[property="twitter:url"]').setAttribute('content', pageUrl);
+    document.querySelector('meta[property="twitter:image"]').setAttribute('content', imageUrl);
+}
+
+function addStructuredData(listing) {
+    const existingSchema = document.querySelector('script[type="application/ld+json"]');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    const schema = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": listing.name,
+        "image": listing.imageUrls,
+        "description": listing.description,
+        "sku": listing.id,
+        "brand": {
+            "@type": "Brand",
+            "name": "PawPals"
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": window.location.href,
+            "priceCurrency": "USD",
+            "price": listing.price,
+            "availability": "https://schema.org/InStock",
+            "seller": {
+                "@type": "Organization",
+                "name": "PawPals"
+            }
+        }
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(schema, null, 2);
+    document.head.appendChild(script);
 }
