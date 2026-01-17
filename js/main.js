@@ -108,8 +108,9 @@ async function renderTestimonialCarousel() {
         slide.style.opacity = index === 0 ? '1' : '0';
         slide.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full text-center">
-                <p class="text-lg italic">"${testimonial.quote}"</p>
-                <p class="mt-4 font-bold">- ${testimonial.name}</p>
+                <img src="${testimonial.imageUrl || 'https://via.placeholder.com/150'}" alt="${testimonial.name}" class="w-24 h-24 rounded-full mb-4 object-cover">
+                <p class="text-lg italic text-gray-700">"${testimonial.quote}"</p>
+                <p class="mt-4 font-bold text-primary">- ${testimonial.name}</p>
             </div>
         `;
         slidesContainer.appendChild(slide);

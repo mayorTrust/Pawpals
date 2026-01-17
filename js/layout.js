@@ -70,20 +70,62 @@ function injectHeader() {
 function injectFooter() {
     const footerPlaceholder = document.createElement('div');
     footerPlaceholder.innerHTML = `
-    <footer class="border-t">
-      <div class="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 md:h-24 md:flex-row md:py-0">
-        <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-          <img src="/pawpals.png" alt="PawPals Logo" class="h-6 w-6">
-          <p class="text-center text-sm leading-loose md:text-left">
-            Built by your friendly neighborhood AI.
-          </p>
+    <footer class="bg-gray-900 text-gray-400 py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="font-bold mb-4 text-lg" style="color: #4a2c2a;">RESOURCES</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="/faq.html" class="hover:text-primary">FAQs</a></li>
+                        <li><a href="/mobile-app-download.html" class="hover:text-primary">Mobile App Download</a></li>
+                        <li><a href="/news-center.html" class="hover:text-primary">News Center</a></li>
+                        <li><a href="/put-pawpals-on-your-site.html" class="hover:text-primary">Put PawPals On Your Site</a></li>
+                        <li><a href="/contact-us.html" class="hover:text-primary">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold mb-4 text-lg" style="color: #4a2c2a;">ADOPT OR GET INVOLVED</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="/listings.html" class="hover:text-primary">All Adopt or Get Involved</a></li>
+                        <li><a href="/listings.html" class="hover:text-primary">Adopting Pets</a></li>
+                        <li><a href="/animal-shelters-and-rescues.html" class="hover:text-primary">Animal Shelters & Rescues</a></li>
+                        <li><a href="/other-types-of-pets.html" class="hover:text-primary">Other Types of Pets</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold mb-4 text-lg" style="color: #4a2c2a;">ABOUT DOGS & PUPPIES</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="/about-dogs.html" class="hover:text-primary">All About Dogs & Puppies</a></li>
+                        <li><a href="/dog-adoption.html" class="hover:text-primary">Dog Adoption</a></li>
+                        <li><a href="/dog-breeds.html" class="hover:text-primary">Dog Breeds</a></li>
+                        <li><a href="/feeding-your-dog.html" class="hover:text-primary">Feeding Your Dog</a></li>
+                        <li><a href="/dog-behavior.html" class="hover:text-primary">Dog Behavior</a></li>
+                        <li><a href="/dog-health-and-wellness.html" class="hover:text-primary">Dog Health & Wellness</a></li>
+                        <li><a href="/dog-training.html" class="hover:text-primary">Dog Training</a></li>
+                        <li><a href="/other-dog-information.html" class="hover:text-primary">Other Dog Information</a></li>
+                    </ul>
+                </div>
+                 <div class="flex items-center">
+                    <a href="/index.html" class="flex items-center space-x-2">
+                        <img src="/pawpals.png" alt="PawPals Logo" class="h-12 w-12">
+                        <span class="inline-block font-bold text-xl font-headline text-white">PawPals</span>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-gray-700 pt-8 text-xs text-gray-400">
+                <div class="flex flex-wrap gap-4">
+                    <a href="/shelter-rescue-registration.html" class="hover:text-primary">Shelter & Rescue Registration</a>
+                    <a href="/sitemap.html" class="hover:text-primary">Sitemap</a>
+                    <a href="/terms-of-service.html" class="hover:text-primary">Terms of Service</a>
+                    <a href="/notice-at-collection.html" class="hover:text-primary">Notice at Collection</a>
+                    <a href="/privacy-policy.html" class="hover:text-primary">Privacy Policy (updated)</a>
+                    <a href="/accessibility.html" class="hover:text-primary">Accessibility</a>
+                    <a href="/cookie-policy.html" class="hover:text-primary">Cookie Policy</a>
+                    <a href="/your-privacy-choices.html" class="hover:text-primary">Your Privacy Choices</a>
+                </div>
+                <p class="mt-4">&copy; ${new Date().getFullYear()} PawPals Inc. All rights reserved.</p>
+            </div>
         </div>
-        <div class="flex items-center gap-4">
-          <a href="/testimonials.html" class="text-sm text-muted-foreground hover:text-foreground">Testimonials</a>
-          <a href="/career.html" class="text-sm text-muted-foreground hover:text-foreground">Careers</a>
-          <p class="text-sm text-muted-foreground">&copy; ${new Date().getFullYear()} PawPals Inc.</p>
-        </div>
-      </div>
     </footer>
     `;
     document.body.appendChild(footerPlaceholder);

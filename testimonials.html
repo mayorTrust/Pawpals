@@ -55,14 +55,11 @@
 
         function createTestimonialCard(testimonial) {
             const card = document.createElement('div');
-            card.className = "bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between";
+            card.className = "bg-white rounded-lg shadow-lg p-6 flex flex-col items-center text-center";
             card.innerHTML = `
-                <div>
-                    <p class="text-lg text-gray-700 italic">"${testimonial.quote}"</p>
-                </div>
-                <div class="mt-4">
-                    <p class="text-right text-primary font-bold text-lg">- ${testimonial.name}</p>
-                </div>
+                <img src="${testimonial.imageUrl || 'https://via.placeholder.com/150'}" alt="${testimonial.name}" class="w-24 h-24 rounded-full mb-4">
+                <p class="text-lg text-gray-700 italic">"${testimonial.quote}"</p>
+                <p class="mt-4 font-bold text-primary text-lg">- ${testimonial.name}</p>
             `;
             return card;
         }
