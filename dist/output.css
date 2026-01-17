@@ -1372,8 +1372,8 @@ body {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
-.to-amber-700 {
-  --tw-gradient-to: #b45309 var(--tw-gradient-to-position);
+.to-amber-900 {
+  --tw-gradient-to: #78350f var(--tw-gradient-to-position);
 }
 
 .object-cover {

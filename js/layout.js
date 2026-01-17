@@ -70,7 +70,7 @@ function injectHeader() {
 function injectFooter() {
     const footerPlaceholder = document.createElement('div');
     footerPlaceholder.innerHTML = `
-    <footer class="bg-gradient-to-br from-stone-900 to-amber-700 text-gray-200 py-12">
+    <footer class="bg-gradient-to-br from-stone-900 to-amber-900 text-gray-200 py-12">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
