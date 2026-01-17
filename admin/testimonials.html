@@ -150,9 +150,9 @@
         async function uploadImage(file) {
             if (!file) return null;
             const formData = new FormData();
-            formData.append('images[]', file);
+            formData.append('images', file);
             try {
-                const response = await fetch('/upload_to_imghippo.php', {
+                const response = await fetch('/upload.php', {
                     method: 'POST',
                     body: formData,
                 });
