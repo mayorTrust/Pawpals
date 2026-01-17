@@ -18,17 +18,31 @@ if (!is_dir($uploadDir)) {
 }
 
 if (isset($_FILES['images'])) {
-    $totalFiles = count($_FILES['images']['name']);
+    // Handle both single and multiple file uploads
+    $files = [];
+    if (is_array($_FILES['images']['name'])) {
+        $totalFiles = count($_FILES['images']['name']);
+        for ($i = 0; $i < $totalFiles; $i++) {
+            $files[] = [
+                'name' => $_FILES['images']['name'][$i],
+                'tmp_name' => $_FILES['images']['tmp_name'][$i],
+                'size' => $_FILES['images']['size'][$i],
+                'error' => $_FILES['images']['error'][$i],
+            ];
+        }
+    } else {
+        $files[] = $_FILES['images'];
+    }
 
     // Define allowed file types and their corresponding MIME types
     $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
     $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
 
-    for ($i = 0; $i < $totalFiles; $i++) {
-        $fileName = $_FILES['images']['name'][$i];
-        $fileTmpName = $_FILES['images']['tmp_name'][$i];
-        $fileSize = $_FILES['images']['size'][$i];
-        $fileError = $_FILES['images']['error'][$i];
+    foreach ($files as $file) {
+        $fileName = $file['name'];
+        $fileTmpName = $file['tmp_name'];
+        $fileSize = $file['size'];
+        $fileError = $file['error'];
 
         // 1. Check for upload errors
         if ($fileError !== UPLOAD_ERR_OK) {
