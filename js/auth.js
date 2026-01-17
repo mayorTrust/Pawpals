@@ -1,5 +1,5 @@
 import { auth, db } from './firebase.js';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import { updateAuthNav } from './layout.js'; // Import updateAuthNav
 import { showNotification } from './notification.js';
@@ -127,6 +127,16 @@ async function logout() {
     }
 }
 
+async function sendPasswordReset(email) {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        showNotification('Password reset email sent! Please check your inbox.', false);
+    } catch (error) {
+        console.error('Password reset failed:', error.message);
+        showNotification('Password reset failed: ' + error.message, true);
+    }
+}
+
 function getLoggedInUser() {
     return currentUser;
 }
@@ -139,4 +149,4 @@ function isAdmin() {
     return currentUser && currentUser.role === 'admin';
 }
 
-export { login, signup, logout, getLoggedInUser, isLoggedIn, isAdmin, authReady };
+export { login, signup, logout, sendPasswordReset, getLoggedInUser, isLoggedIn, isAdmin, authReady };

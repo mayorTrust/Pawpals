@@ -1,4 +1,4 @@
-import { getListings, getListingById, getUserById } from './data.js';
+import { getListings, getListingById, getUserById, getTestimonials } from './data.js';
 import { showLoadingOverlay, hideLoadingOverlay } from './loading.js';
 import { showNotification } from './notification.js';
 import { getLoggedInUser } from './auth.js';
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (path.endsWith('/') || path.endsWith('index.html')) {
         renderFeaturedListings();
+        renderTestimonialCarousel();
         setupSearch('search-form-home');
     } else if (path.endsWith('listings.html')) {
         renderListings();
@@ -89,6 +90,50 @@ async function renderFeaturedListings() {
     } finally {
         hideLoadingOverlay();
     }
+}
+
+async function renderTestimonialCarousel() {
+    const slidesContainer = document.getElementById('testimonial-slides');
+    if (!slidesContainer) return;
+
+    const testimonials = await getTestimonials();
+    if (testimonials.length === 0) {
+        slidesContainer.innerHTML = '<p class="text-center">No testimonials yet.</p>';
+        return;
+    }
+
+    testimonials.forEach((testimonial, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'absolute w-full h-full transition-opacity duration-500 ease-in-out';
+        slide.style.opacity = index === 0 ? '1' : '0';
+        slide.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full text-center">
+                <p class="text-lg italic">"${testimonial.quote}"</p>
+                <p class="mt-4 font-bold">- ${testimonial.name}</p>
+            </div>
+        `;
+        slidesContainer.appendChild(slide);
+    });
+
+    let currentSlide = 0;
+    const slides = slidesContainer.children;
+    const totalSlides = slides.length;
+
+    const showSlide = (index) => {
+        for (let i = 0; i < totalSlides; i++) {
+            slides[i].style.opacity = i === index ? '1' : '0';
+        }
+    };
+
+    document.getElementById('next-testimonial').addEventListener('click', () => {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        showSlide(currentSlide);
+    });
+
+    document.getElementById('prev-testimonial').addEventListener('click', () => {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        showSlide(currentSlide);
+    });
 }
 
 async function renderListings() {

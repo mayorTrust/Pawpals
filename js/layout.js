@@ -79,6 +79,8 @@ function injectFooter() {
           </p>
         </div>
         <div class="flex items-center gap-4">
+          <a href="/testimonials.html" class="text-sm text-muted-foreground hover:text-foreground">Testimonials</a>
+          <a href="/career.html" class="text-sm text-muted-foreground hover:text-foreground">Careers</a>
           <p class="text-sm text-muted-foreground">&copy; ${new Date().getFullYear()} PawPals Inc.</p>
         </div>
       </div>

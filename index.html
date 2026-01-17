@@ -104,6 +104,32 @@
           </div>
         </div>
       </section>
+
+      <section class="py-12 md:py-20 bg-white">
+        <div class="container mx-auto px-4">
+          <h2 class="text-3xl font-bold text-center font-headline mb-8">Happy Paws, Happy Hearts</h2>
+          <div id="testimonial-carousel" class="relative w-full max-w-2xl mx-auto">
+            <div id="testimonial-slides" class="relative h-48 overflow-hidden">
+              <!-- Testimonial slides will be dynamically inserted here -->
+            </div>
+            <button id="prev-testimonial" class="absolute top-1/2 left-0 transform -translate-y-1/2 bg-primary text-primary-foreground rounded-full p-2 focus:outline-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button id="next-testimonial" class="absolute top-1/2 right-0 transform -translate-y-1/2 bg-primary text-primary-foreground rounded-full p-2 focus:outline-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          <div class="text-center mt-8">
+            <a href="testimonials.html" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+              Read More Testimonials
+            </a>
+          </div>
+        </div>
+      </section>
     </main>
 
     <script type="module" src="./js/auth.js"></script>
@@ -116,7 +142,7 @@
     (function(){
     var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
     s1.async=true;
-    s1.src='https://embed.tawk.to/695ca77a58fb05197cbe44bd/1je8usds4';
+    s1.src='https://embed.tawk.to/696a97d88c37dd197f6c464c/default';
     s1.charset='UTF-8';
     s1.setAttribute('crossorigin','*');
     s0.parentNode.insertBefore(s1,s0);

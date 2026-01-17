@@ -101,4 +101,59 @@ async function savePaymentSettings(settingsData) {
     }
 }
 
-export { getListings, getListingById, addListing, updateListing, deleteListing, getAllUsers, getUserById, getPaymentSettings, savePaymentSettings };
+// Function to fetch all testimonials
+async function getTestimonials() {
+    const testimonialsCol = collection(db, 'testimonials');
+    const testimonialSnapshot = await getDocs(testimonialsCol);
+    const testimonialsList = testimonialSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return testimonialsList;
+}
+
+// Function to fetch a single testimonial by ID
+async function getTestimonialById(id) {
+    const testimonialRef = doc(db, 'testimonials', id);
+    const testimonialSnap = await getDoc(testimonialRef);
+    if (testimonialSnap.exists()) {
+        return { id: testimonialSnap.id, ...testimonialSnap.data() };
+    } else {
+        console.log("No such document!");
+        return null;
+    }
+}
+
+// Function to add a new testimonial
+async function addTestimonial(testimonialData) {
+    try {
+        const docRef = await addDoc(collection(db, "testimonials"), testimonialData);
+        showNotification("Testimonial added successfully!", false);
+        return docRef.id;
+    } catch (e) {
+        showNotification("Error adding testimonial: " + e.message, true);
+        throw e;
+    }
+}
+
+// Function to update an existing testimonial
+async function updateTestimonial(id, newData) {
+    try {
+        const testimonialRef = doc(db, 'testimonials', id);
+        await updateDoc(testimonialRef, newData);
+        showNotification("Testimonial updated successfully!", false);
+    } catch (e) {
+        showNotification("Error updating testimonial: " + e.message, true);
+        throw e;
+    }
+}
+
+// Function to delete a testimonial
+async function deleteTestimonial(id) {
+    try {
+        await deleteDoc(doc(db, 'testimonials', id));
+        showNotification("Testimonial deleted successfully!", false);
+    } catch (e) {
+        showNotification("Error deleting testimonial: " + e.message, true);
+        throw e;
+    }
+}
+
+export { getListings, getListingById, addListing, updateListing, deleteListing, getAllUsers, getUserById, getPaymentSettings, savePaymentSettings, getTestimonials, getTestimonialById, addTestimonial, updateTestimonial, deleteTestimonial };

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawPals - Admin Testimonials</title>
+    <link rel="stylesheet" href="/dist/output.css">
+    <style>
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: hsl(34 91% 75%); /* Using theme primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold">Manage Testimonials</h1>
+            <button id="add-testimonial-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+                Add New Testimonial
+            </button>
+        </div>
+
+        <!-- Form for adding/editing testimonials (hidden by default) -->
+        <div id="testimonial-form-container" class="hidden bg-white shadow sm:rounded-lg p-6 mb-8">
+            <h2 id="testimonial-form-title" class="text-2xl font-bold mb-4">Add New Testimonial</h2>
+            <form id="testimonial-form" class="space-y-4">
+                <input type="hidden" id="testimonial-id">
+                <div>
+                    <label for="testimonial-name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <input type="text" id="testimonial-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div>
+                    <label for="testimonial-quote" class="block text-sm font-medium text-gray-700">Quote</label>
+                    <textarea id="testimonial-quote" required rows="4" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancel-edit-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-gray-200 text-gray-800 hover:bg-gray-300 h-9 px-4 py-2">Cancel</button>
+                    <button type="submit" id="save-testimonial-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">Save Testimonial</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="admin-testimonials-content" class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quote</th>
+                            <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Actions</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="testimonials-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Table rows will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/layout.js"></script>
+    <script type="module" src="../js/data.js"></script>
+    <script type="module" src="../js/notification.js"></script>
+    <script type="module">
+        import { isAdmin, authReady } from '../js/auth.js';
+        import { getTestimonials, addTestimonial, getTestimonialById, updateTestimonial, deleteTestimonial } from '../js/data.js';
+        import { showLoadingOverlay, hideLoadingOverlay } from '../js/loading.js';
+        import { showNotification } from '../js/notification.js';
+
+        const formContainer = document.getElementById('testimonial-form-container');
+        const form = document.getElementById('testimonial-form');
+        const formTitle = document.getElementById('testimonial-form-title');
+        const testimonialIdInput = document.getElementById('testimonial-id');
+        const testimonialNameInput = document.getElementById('testimonial-name');
+        const testimonialQuoteInput = document.getElementById('testimonial-quote');
+
+        function openForm(testimonial = null) {
+            form.reset();
+            if (testimonial) {
+                formTitle.textContent = 'Edit Testimonial';
+                testimonialIdInput.value = testimonial.id;
+                testimonialNameInput.value = testimonial.name;
+                testimonialQuoteInput.value = testimonial.quote;
+            } else {
+                formTitle.textContent = 'Add New Testimonial';
+                testimonialIdInput.value = '';
+            }
+            formContainer.classList.remove('hidden');
+        }
+
+        function closeForm() {
+            formContainer.classList.add('hidden');
+            form.reset();
+        }
+
+        document.getElementById('add-testimonial-btn').addEventListener('click', () => openForm());
+        document.getElementById('cancel-edit-btn').addEventListener('click', closeForm);
+
+        async function loadTestimonials() {
+            showLoadingOverlay();
+            const tableBody = document.getElementById('testimonials-table-body');
+            tableBody.innerHTML = '';
+            try {
+                const testimonials = await getTestimonials();
+                if (testimonials.length > 0) {
+                    testimonials.forEach(testimonial => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${testimonial.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${testimonial.quote}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button data-id="${testimonial.id}" class="text-indigo-600 hover:text-indigo-900 edit-testimonial-btn">Edit</button>
+                                <button data-id="${testimonial.id}" class="text-red-600 hover:text-red-900 delete-testimonial-btn ml-4">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No testimonials found.</td></tr>';
+                }
+            } catch (error) {
+                showNotification('Error loading testimonials: ' + error.message, true);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+        
+        document.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('edit-testimonial-btn')) {
+                const testimonialId = event.target.dataset.id;
+                const testimonial = await getTestimonialById(testimonialId);
+                if (testimonial) {
+                    openForm(testimonial);
+                }
+            }
+            if (event.target.classList.contains('delete-testimonial-btn')) {
+                const testimonialId = event.target.dataset.id;
+                if (confirm('Are you sure you want to delete this testimonial?')) {
+                    await deleteTestimonial(testimonialId);
+                    loadTestimonials();
+                }
+            }
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const testimonialId = testimonialIdInput.value;
+            const testimonialData = {
+                name: testimonialNameInput.value,
+                quote: testimonialQuoteInput.value,
+            };
+            if (testimonialId) {
+                await updateTestimonial(testimonialId, testimonialData);
+            } else {
+                await addTestimonial(testimonialData);
+            }
+            closeForm();
+            loadTestimonials();
+        });
+
+        authReady.then(() => {
+            if (!isAdmin()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            loadTestimonials();
+        });
+    </script>
+</body>
+</html>
