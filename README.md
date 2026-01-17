@@ -143,6 +143,100 @@ php -S localhost:8000
 
 Now, open your web browser and go to `http://localhost:8000`.
 
+## ☁️ Deployment
+
+These instructions guide you through deploying the PawPals application using [fly.io](https://fly.io), a modern platform for running full-stack applications.
+
+### Prerequisites
+
+-   A `fly.io` account.
+-   The `flyctl` command-line tool installed. You can find installation instructions [here](https://fly.io/docs/hands-on/install-flyctl/).
+
+### Step 1: Login to Fly
+
+```bash
+fly auth login
+```
+
+### Step 2: Launch the App
+
+This command will automatically detect the `Dockerfile` and suggest settings.
+
+```bash
+fly launch
+```
+
+When prompted:
+-   Choose an app name (or let Fly generate one).
+-   Select a region.
+-   You may be asked to configure a database, but since this project uses Firebase Firestore, you can skip this step.
+
+This creates a `fly.toml` file, which configures your deployment.
+
+### Step 3: Set Secrets
+
+Your application needs sensitive information (API keys, passwords) that shouldn't be hardcoded. In Fly, these are managed as "secrets."
+
+**1. Firebase Secrets:**
+Get your Firebase configuration object from `js/firebase-config.js` and set each key as a secret.
+
+```bash
+fly secrets set \
+  FIREBASE_API_KEY="YOUR_API_KEY" \
+  FIREBASE_AUTH_DOMAIN="YOUR_AUTH_DOMAIN" \
+  FIREBASE_PROJECT_ID="YOUR_PROJECT_ID" \
+  FIREBASE_STORAGE_BUCKET="YOUR_STORAGE_BUCKET" \
+  FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID" \
+  FIREBASE_APP_ID="YOUR_APP_ID"
+```
+
+**2. SMTP Secrets:**
+Set the secrets for your SMTP server, which are used by PHPMailer.
+
+```bash
+fly secrets set \
+  SMTP_HOST="YOUR_SMTP_HOST" \
+  SMTP_USERNAME="YOUR_SMTP_USERNAME" \
+  SMTP_PASSWORD="YOUR_SMTP_PASSWORD" \
+  SMTP_PORT="587" \
+  SMTP_SECURE="tls" \
+  FROM_EMAIL="no-reply@yourdomain.com" \
+  FROM_NAME="PawPals Support" \
+  ADMIN_EMAIL="admin@yourdomain.com"
+```
+
+**Note:** You'll need to update your application code to read these secrets from environment variables instead of a `config.php` or `js/firebase-config.js` file. This is a best practice for security and portability.
+
+### Step 4: Deploy the Application
+
+After setting your secrets, deploy your application:
+
+```bash
+fly deploy
+```
+
+This command will build the Docker image, push it to Fly's registry, and deploy it.
+
+### Step 5: Monitor Your Deployment
+
+You can monitor the status of your deployment with:
+
+```bash
+fly status
+```
+
+To view real-time logs:
+
+```bash
+fly logs
+```
+
+Your application should now be live! You can open it in your browser with:
+
+```bash
+fly open
+```
+
 ## 🤝 Contributing
 
 We welcome contributions! If you have suggestions or want to improve PawPals, please feel free to:
