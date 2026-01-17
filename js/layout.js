@@ -18,7 +18,7 @@ function injectHeader() {
       <div class="container mx-auto flex h-16 items-center space-x-4 px-4 sm:justify-between sm:space-x-0">
         <div class="flex gap-6 md:gap-10">
           <a href="/index.html" class="flex items-center space-x-2">
-            <img src="/pawpals.png" alt="PawPals Logo" class="h-8 w-8">
+            <img src="/pawpals.png" alt="PawPals Logo" class="h-8 w-8 rounded-full">
             <span class="inline-block font-bold text-lg font-headline">PawPals</span>
           </a>
           <nav class="flex gap-6"> <!-- Changed from hidden md:flex to flex -->
@@ -70,11 +70,11 @@ function injectHeader() {
 function injectFooter() {
     const footerPlaceholder = document.createElement('div');
     footerPlaceholder.innerHTML = `
-    <footer class="bg-gray-900 text-gray-400 py-12">
+    <footer class="bg-gradient-to-br from-stone-900 to-amber-700 text-gray-200 py-12">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
-                    <h3 class="font-bold mb-4 text-lg" style="color: #4a2c2a;">RESOURCES</h3>
+                    <h3 class="font-bold mb-4 text-lg text-amber-200">RESOURCES</h3>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/faq.html" class="hover:text-primary">FAQs</a></li>
                         <li><a href="/mobile-app-download.html" class="hover:text-primary">Mobile App Download</a></li>
@@ -84,7 +84,7 @@ function injectFooter() {
                     </ul>
                 </div>
                 <div>
-                    <h3 class="font-bold mb-4 text-lg" style="color: #4a2c2a;">ADOPT OR GET INVOLVED</h3>
+                    <h3 class="font-bold mb-4 text-lg text-amber-200">ADOPT OR GET INVOLVED</h3>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/listings.html" class="hover:text-primary">All Adopt or Get Involved</a></li>
                         <li><a href="/listings.html" class="hover:text-primary">Adopting Pets</a></li>
@@ -93,7 +93,7 @@ function injectFooter() {
                     </ul>
                 </div>
                 <div>
-                    <h3 class="font-bold mb-4 text-lg" style="color: #4a2c2a;">ABOUT DOGS & PUPPIES</h3>
+                    <h3 class="font-bold mb-4 text-lg text-amber-200">ABOUT DOGS & PUPPIES</h3>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/about-dogs.html" class="hover:text-primary">All About Dogs & Puppies</a></li>
                         <li><a href="/dog-adoption.html" class="hover:text-primary">Dog Adoption</a></li>
@@ -105,15 +105,14 @@ function injectFooter() {
                         <li><a href="/other-dog-information.html" class="hover:text-primary">Other Dog Information</a></li>
                     </ul>
                 </div>
-                 <div class="flex items-center">
-                    <a href="/index.html" class="flex items-center space-x-2">
-                        <img src="/pawpals.png" alt="PawPals Logo" class="h-12 w-12">
-                        <span class="inline-block font-bold text-xl font-headline text-white">PawPals</span>
-                    </a>
-                </div>
             </div>
-            <div class="mt-8 border-t border-gray-700 pt-8 text-xs text-gray-400">
-                <div class="flex flex-wrap gap-4">
+            <div class="mt-8 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
+                <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                    <img src="/pawpals.png" alt="PawPals Logo" class="h-8 w-8 rounded-full">
+                    <span class="font-bold text-lg">PawPals</span>
+                    <p class="ml-4">&copy; ${new Date().getFullYear()} PawPals Inc. All rights reserved.</p>
+                </div>
+                <div class="flex flex-wrap gap-4 justify-center">
                     <a href="/shelter-rescue-registration.html" class="hover:text-primary">Shelter & Rescue Registration</a>
                     <a href="/sitemap.html" class="hover:text-primary">Sitemap</a>
                     <a href="/terms-of-service.html" class="hover:text-primary">Terms of Service</a>
@@ -123,7 +122,6 @@ function injectFooter() {
                     <a href="/cookie-policy.html" class="hover:text-primary">Cookie Policy</a>
                     <a href="/your-privacy-choices.html" class="hover:text-primary">Your Privacy Choices</a>
                 </div>
-                <p class="mt-4">&copy; ${new Date().getFullYear()} PawPals Inc. All rights reserved.</p>
             </div>
         </div>
     </footer>
